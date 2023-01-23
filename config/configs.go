@@ -8,9 +8,12 @@ import (
 )
 
 type Config struct {
-	App  AppConfig  `yaml:"app"`
-	Http HttpConfig `yaml:"http"`
-	Pg   PgConfig   `yaml:"postgres"`
+	App       AppConfig       `yaml:"app"`
+	Http      HttpConfig      `yaml:"http"`
+	Pg        PgConfig        `yaml:"postgres"`
+	Cache     CacheConfig     `yaml:"cache"`
+	Redis     RedisConfig     `yaml:"redis"`
+	Memcached MemcachedConfig `yaml:"memcached"`
 }
 
 type AppConfig struct {
@@ -29,6 +32,20 @@ type PgConfig struct {
 	User   string `env-required:"true" env:"PG_USER" yaml:"user"`
 	Pass   string `env-required:"true" env:"PG_PASS" yaml:"pass"`
 	DbName string `env-required:"true" env:"PG_DBNAME" yaml:"dbname"`
+}
+
+type CacheConfig struct {
+	Driver string `env:"CACHE_DRIVER" yaml:"driver"`
+}
+
+type RedisConfig struct {
+	Host     string `env:"REDIS_HOST" yaml:"host"`
+	Port     string `env:"REDIS_PORT" yaml:"port"`
+	Password string `env:"REDIS_PASSWORD" yaml:"password"`
+}
+
+type MemcachedConfig struct {
+	Hosts []string `env-separator:"|" env:"MEMCACHED_HOSTS" yaml:"hosts"`
 }
 
 func LoadConfig() (*Config, error) {

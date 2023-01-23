@@ -10,6 +10,7 @@ import (
 
 	"github.com/Adhiana46/echo-boilerplate/config"
 	"github.com/Adhiana46/echo-boilerplate/database/seeds"
+	cachePkg "github.com/Adhiana46/echo-boilerplate/pkg/cache"
 	"github.com/Adhiana46/echo-boilerplate/server"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -38,10 +39,19 @@ func main() {
 
 	db, err = openDb(cfg.Pg)
 	if err != nil {
-		log.Panic("[Error][DB]: ", err)
+		log.Panic("[Error][DB]:", err)
+	}
+	defer db.Close()
+
+	// cache
+	cache, err := openCache(cfg)
+	if err != nil {
+		log.Panic("[Error][Cache]:", err)
 	}
 
-	// TODO: cache
+	if cache != nil {
+		defer cache.Close()
+	}
 
 	// TODO: documentstore
 
@@ -84,8 +94,18 @@ func openDb(cfg config.PgConfig) (*sqlx.DB, error) {
 	return dbConn, nil
 }
 
-func openCache() {
-	//
+func openCache(cfg *config.Config) (cachePkg.Cache, error) {
+	var instance cachePkg.Cache
+	var err error
+
+	switch cfg.Cache.Driver {
+	case "redis":
+		instance, err = cachePkg.NewRedisCache(cfg.Redis.Host, cfg.Redis.Port, cfg.Redis.Password, 0)
+	case "memcached":
+		instance, err = cachePkg.NewMcCache(cfg.Memcached.Hosts...)
+	}
+
+	return instance, err
 }
 
 func handleArgs() {

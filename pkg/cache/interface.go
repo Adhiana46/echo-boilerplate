@@ -1,6 +1,7 @@
 package cache
 
 type Cache interface {
-	Set(key string, value any) error
-	Get(key string) (any, error)
+	Set(key string, value string, expSecond int32) error
+	Get(key string) (string, error)
+	Close() error
 }
