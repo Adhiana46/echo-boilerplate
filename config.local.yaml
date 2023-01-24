@@ -1,6 +1,7 @@
 app:
   name: 'echo-boilerplate'
   version: '1.0.0'
+  debug: true
 
 http:
   host: '0.0.0.0'

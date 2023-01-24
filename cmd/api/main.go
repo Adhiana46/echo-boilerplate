@@ -60,7 +60,7 @@ func main() {
 	handleArgs()
 
 	// server
-	srv := server.NewServer(cfg, db)
+	srv := server.NewServer(cfg, db, cache)
 
 	if err := srv.Run(); err != nil {
 		log.Panic("[Error][Server]", err)
