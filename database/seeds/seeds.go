@@ -24,15 +24,15 @@ type job struct {
 
 func (s *Seed) Run(ctx context.Context) error {
 	lists := []job{
-		job{
+		{
 			lbl: "Permissions Seeder",
 			f:   seedPermissions,
 		},
-		job{
+		{
 			lbl: "Roles Seeder",
 			f:   seedRoles,
 		},
-		job{
+		{
 			lbl: "Users Seeder",
 			f:   seedUsers,
 		},
@@ -50,15 +50,15 @@ func (s *Seed) Run(ctx context.Context) error {
 
 func (s *Seed) Rollback(ctx context.Context) error {
 	lists := []job{
-		job{
+		{
 			lbl: "Permissions Seeder",
 			f:   unseedPermissions,
 		},
-		job{
+		{
 			lbl: "Roles Seeder",
 			f:   unseedRoles,
 		},
-		job{
+		{
 			lbl: "Users Seeder",
 			f:   unseedUsers,
 		},

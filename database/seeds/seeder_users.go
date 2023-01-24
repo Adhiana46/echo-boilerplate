@@ -15,7 +15,7 @@ func seedUsers(db *sql.DB) error {
 	}
 
 	users := []map[string]string{
-		map[string]string{
+		{
 			"username": "root",
 			"email":    "root@example.com",
 			"password": password,
@@ -23,7 +23,7 @@ func seedUsers(db *sql.DB) error {
 			"role":     "super-admin",
 			"status":   "1",
 		},
-		map[string]string{
+		{
 			"username": "admin",
 			"email":    "admin@example.com",
 			"password": password,

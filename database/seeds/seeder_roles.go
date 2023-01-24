@@ -9,7 +9,7 @@ import (
 
 func seedRoles(db *sql.DB) error {
 	roles := map[string][]string{
-		"super-admin": []string{
+		"super-admin": {
 			"permissions",
 			"permissions.create",
 			"permissions.read",
@@ -26,7 +26,7 @@ func seedRoles(db *sql.DB) error {
 			"users.update",
 			"users.delete",
 		},
-		"admin": []string{
+		"admin": {
 			"roles",
 			"roles.create",
 			"roles.read",
