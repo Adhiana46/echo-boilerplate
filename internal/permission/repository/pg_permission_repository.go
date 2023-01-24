@@ -49,7 +49,33 @@ func (r *pgPermissionRepository) Create(ctx context.Context, e *entity.Permissio
 }
 
 func (r *pgPermissionRepository) Update(ctx context.Context, e *entity.Permission) (*entity.Permission, error) {
-	panic("Not implemented")
+	sql := `
+		UPDATE permissions
+		SET parent_id = $1, 
+			name = $2, 
+			type = $3, 
+			updated_at = $4, 
+			updated_by = $5
+		WHERE
+			uuid = $6
+	`
+
+	err := r.db.QueryRowContext(
+		ctx,
+		sql,
+		e.ParentId,
+		e.Name,
+		e.Type,
+		e.UpdatedAt,
+		e.UpdatedBy,
+		e.Uuid,
+	).Err()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FindByUuid(ctx, e.Uuid)
 }
 
 func (r *pgPermissionRepository) Destroy(ctx context.Context, e *entity.Permission) error {

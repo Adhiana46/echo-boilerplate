@@ -22,15 +22,15 @@ type CreatePermissionRequest struct {
 	Type     string `json:"type" validate:"required"`
 }
 
-type DeletePermissionRequest struct {
-	Uuid string `json:"uuid"`
+type UpdatePermissionRequest struct {
+	Uuid     string `json:"uuid" validate:"required"`
+	ParentId int    `json:"parent_id" validate:"numeric"`
+	Name     string `json:"name" validate:"required"`
+	Type     string `json:"type" validate:"required"`
 }
 
-type UpdatePermissionRequest struct {
-	Uuid     string `json:"uuid"`
-	ParentId int    `json:"parent_id"`
-	Name     string `json:"name"`
-	Type     string `json:"type"`
+type DeletePermissionRequest struct {
+	Uuid string `json:"uuid"`
 }
 
 type GetPermissionRequest struct {

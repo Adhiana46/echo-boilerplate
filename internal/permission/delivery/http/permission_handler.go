@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/Adhiana46/echo-boilerplate/dto"
 	"github.com/Adhiana46/echo-boilerplate/internal/permission"
@@ -11,6 +12,7 @@ import (
 
 type Handler interface {
 	Store() func(echo.Context) error
+	Update() func(echo.Context) error
 }
 
 type handler struct {
@@ -36,6 +38,29 @@ func (h *handler) Store() func(echo.Context) error {
 		}
 
 		res, err := h.uc.CreatePermission(c.Request().Context(), &input)
+		if err != nil {
+			panic(err)
+		}
+
+		return c.JSON(http.StatusCreated, utils.JsonSuccess(http.StatusCreated, "", res, nil))
+	}
+}
+
+func (h *handler) Update() func(echo.Context) error {
+	return func(c echo.Context) error {
+		input := dto.UpdatePermissionRequest{}
+
+		if err := c.Bind(&input); err != nil {
+			panic(err)
+		}
+
+		input.Uuid = strings.Trim(c.Param("uuid"), "/")
+
+		if err := c.Validate(input); err != nil {
+			panic(err)
+		}
+
+		res, err := h.uc.UpdatePermission(c.Request().Context(), &input)
 		if err != nil {
 			panic(err)
 		}

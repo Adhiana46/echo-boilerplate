@@ -78,9 +78,57 @@ func (uc *permissionUsecase) CreatePermission(ctx context.Context, input *dto.Cr
 }
 
 func (uc *permissionUsecase) UpdatePermission(ctx context.Context, input *dto.UpdatePermissionRequest) (*dto.PermissionResponse, error) {
-	// TODO: validation logic
+	e, err := uc.repo.FindByUuid(ctx, input.Uuid)
+	if err != nil {
+		return nil, err
+	}
 
-	panic("not implemented.")
+	// validation logic
+	if e.Name != input.Name {
+		numrows, err := uc.repo.CountByName(ctx, input.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		if numrows > 0 {
+			return nil, errors.NewBadRequestError(fmt.Sprintf("Permission with name '%s' already exists", input.Name))
+		}
+	}
+
+	e.ParentId = input.ParentId
+	e.Name = input.Name
+	e.Type = input.Type
+	e.UpdatedAt = sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
+	e.UpdatedBy = 0 // TODO: user
+
+	updatedE, err := uc.repo.Update(ctx, e)
+	if err != nil {
+		return nil, err
+	}
+
+	createdAt := ""
+	updatedAt := ""
+
+	if updatedE.CreatedAt.Valid {
+		createdAt = updatedE.CreatedAt.Time.Format(time.RFC3339)
+	}
+	if updatedE.UpdatedAt.Valid {
+		updatedAt = updatedE.UpdatedAt.Time.Format(time.RFC3339)
+	}
+
+	return &dto.PermissionResponse{
+		Uuid:      updatedE.Uuid,
+		ParentId:  updatedE.ParentId,
+		Name:      updatedE.Name,
+		Type:      updatedE.Type,
+		CreatedAt: createdAt,
+		CreatedBy: updatedE.CreatedBy,
+		UpdatedAt: updatedAt,
+		UpdatedBy: updatedE.UpdatedBy,
+	}, err
 }
 
 func (uc *permissionUsecase) DeletePermission(ctx context.Context, input *dto.DeletePermissionRequest) (*dto.PermissionResponse, error) {

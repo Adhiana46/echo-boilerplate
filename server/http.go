@@ -150,4 +150,5 @@ func (s *Server) setupHttpHandler() {
 func (s *Server) setupRoutes() {
 	groupPermission := s.e.Group("/api/v1/permissions")
 	groupPermission.POST("/", s.permissionHandler.Store())
+	groupPermission.PUT("/:uuid", s.permissionHandler.Update())
 }
