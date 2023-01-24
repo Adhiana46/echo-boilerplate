@@ -1,0 +1,22 @@
+CREATE SEQUENCE users_seq;
+
+CREATE TABLE users
+(
+	id INT NOT NULL DEFAULT NEXTVAL ('users_seq'),
+	uuid CHAR(36) NOT NULL UNIQUE,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+	name VARCHAR(255) NOT NULL,
+    role_id INT NOT NULL,
+    status INT NOT NULL DEFAULT 1,
+    last_login_at TIMESTAMP(0),
+	created_at TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by INT DEFAULT NULL,
+	updated_at TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by INT DEFAULT NULL,
+
+    CONSTRAINT fk_users_role_id FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT,
+
+	PRIMARY KEY (id)
+);

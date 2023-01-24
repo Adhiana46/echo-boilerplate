@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS role_permissions;
+
+DROP TABLE IF EXISTS roles;
+DROP SEQUENCE IF EXISTS roles_seq;
