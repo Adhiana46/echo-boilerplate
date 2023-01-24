@@ -13,6 +13,8 @@ import (
 type Handler interface {
 	Store() func(echo.Context) error
 	Update() func(echo.Context) error
+	Delete() func(echo.Context) error
+	GetByUuid() func(echo.Context) error
 }
 
 type handler struct {
@@ -61,6 +63,44 @@ func (h *handler) Update() func(echo.Context) error {
 		}
 
 		res, err := h.uc.UpdatePermission(c.Request().Context(), &input)
+		if err != nil {
+			panic(err)
+		}
+
+		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res, nil))
+	}
+}
+
+func (h *handler) Delete() func(echo.Context) error {
+	return func(c echo.Context) error {
+		input := dto.DeletePermissionRequest{
+			Uuid: strings.Trim(c.Param("uuid"), "/"),
+		}
+
+		if err := c.Validate(input); err != nil {
+			panic(err)
+		}
+
+		res, err := h.uc.DeletePermission(c.Request().Context(), &input)
+		if err != nil {
+			panic(err)
+		}
+
+		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res, nil))
+	}
+}
+
+func (h *handler) GetByUuid() func(echo.Context) error {
+	return func(c echo.Context) error {
+		input := dto.GetPermissionRequest{
+			Uuid: strings.Trim(c.Param("uuid"), "/"),
+		}
+
+		if err := c.Validate(input); err != nil {
+			panic(err)
+		}
+
+		res, err := h.uc.Get(c.Request().Context(), &input)
 		if err != nil {
 			panic(err)
 		}

@@ -55,26 +55,7 @@ func (uc *permissionUsecase) CreatePermission(ctx context.Context, input *dto.Cr
 		return nil, err
 	}
 
-	createdAt := ""
-	updatedAt := ""
-
-	if e.CreatedAt.Valid {
-		createdAt = e.CreatedAt.Time.Format(time.RFC3339)
-	}
-	if e.UpdatedAt.Valid {
-		updatedAt = e.UpdatedAt.Time.Format(time.RFC3339)
-	}
-
-	return &dto.PermissionResponse{
-		Uuid:      e.Uuid,
-		ParentId:  e.ParentId,
-		Name:      e.Name,
-		Type:      e.Type,
-		CreatedAt: createdAt,
-		CreatedBy: e.CreatedBy,
-		UpdatedAt: updatedAt,
-		UpdatedBy: e.UpdatedBy,
-	}, err
+	return dto.NewPermissionResponse(e), nil
 }
 
 func (uc *permissionUsecase) UpdatePermission(ctx context.Context, input *dto.UpdatePermissionRequest) (*dto.PermissionResponse, error) {
@@ -109,38 +90,27 @@ func (uc *permissionUsecase) UpdatePermission(ctx context.Context, input *dto.Up
 		return nil, err
 	}
 
-	createdAt := ""
-	updatedAt := ""
-
-	if updatedE.CreatedAt.Valid {
-		createdAt = updatedE.CreatedAt.Time.Format(time.RFC3339)
-	}
-	if updatedE.UpdatedAt.Valid {
-		updatedAt = updatedE.UpdatedAt.Time.Format(time.RFC3339)
-	}
-
-	return &dto.PermissionResponse{
-		Uuid:      updatedE.Uuid,
-		ParentId:  updatedE.ParentId,
-		Name:      updatedE.Name,
-		Type:      updatedE.Type,
-		CreatedAt: createdAt,
-		CreatedBy: updatedE.CreatedBy,
-		UpdatedAt: updatedAt,
-		UpdatedBy: updatedE.UpdatedBy,
-	}, err
+	return dto.NewPermissionResponse(updatedE), nil
 }
 
 func (uc *permissionUsecase) DeletePermission(ctx context.Context, input *dto.DeletePermissionRequest) (*dto.PermissionResponse, error) {
-	// TODO: validation logic
+	e, err := uc.repo.FindByUuid(ctx, input.Uuid)
+	if err != nil {
+		return nil, err
+	}
 
-	panic("not implemented.")
+	err = uc.repo.Destroy(ctx, e)
+
+	return nil, err
 }
 
 func (uc *permissionUsecase) Get(ctx context.Context, input *dto.GetPermissionRequest) (*dto.PermissionResponse, error) {
-	// TODO: validation logic
+	e, err := uc.repo.FindByUuid(ctx, input.Uuid)
+	if err != nil {
+		return nil, err
+	}
 
-	panic("not implemented.")
+	return dto.NewPermissionResponse(e), nil
 }
 
 func (uc *permissionUsecase) GetList(ctx context.Context, input *dto.GetListPermissionRequest) (*dto.PermissionResponse, error) {

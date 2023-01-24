@@ -151,4 +151,6 @@ func (s *Server) setupRoutes() {
 	groupPermission := s.e.Group("/api/v1/permissions")
 	groupPermission.POST("/", s.permissionHandler.Store())
 	groupPermission.PUT("/:uuid", s.permissionHandler.Update())
+	groupPermission.DELETE("/:uuid", s.permissionHandler.Delete())
+	groupPermission.GET("/:uuid", s.permissionHandler.GetByUuid())
 }

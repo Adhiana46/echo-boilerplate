@@ -79,7 +79,11 @@ func (r *pgPermissionRepository) Update(ctx context.Context, e *entity.Permissio
 }
 
 func (r *pgPermissionRepository) Destroy(ctx context.Context, e *entity.Permission) error {
-	panic("Not implemented")
+	sql := `DELETE FROM permissions WHERE id = $1`
+
+	_, err := r.db.ExecContext(ctx, sql, e.Id)
+
+	return err
 }
 
 func (r *pgPermissionRepository) FindById(ctx context.Context, id int) (*entity.Permission, error) {

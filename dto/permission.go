@@ -1,5 +1,11 @@
 package dto
 
+import (
+	"time"
+
+	"github.com/Adhiana46/echo-boilerplate/entity"
+)
+
 type PermissionResponse struct {
 	Uuid      string `json:"uuid"`
 	ParentId  int    `json:"parent_id"`
@@ -9,6 +15,29 @@ type PermissionResponse struct {
 	CreatedBy int    `json:"created_by"`
 	UpdatedAt string `json:"updated_at"`
 	UpdatedBy int    `json:"updated_by"`
+}
+
+func NewPermissionResponse(e *entity.Permission) *PermissionResponse {
+	createdAt := ""
+	updatedAt := ""
+
+	if e.CreatedAt.Valid {
+		createdAt = e.CreatedAt.Time.Format(time.RFC3339)
+	}
+	if e.UpdatedAt.Valid {
+		updatedAt = e.UpdatedAt.Time.Format(time.RFC3339)
+	}
+
+	return &PermissionResponse{
+		Uuid:      e.Uuid,
+		ParentId:  e.ParentId,
+		Name:      e.Name,
+		Type:      e.Type,
+		CreatedAt: createdAt,
+		CreatedBy: e.CreatedBy,
+		UpdatedAt: updatedAt,
+		UpdatedBy: e.UpdatedBy,
+	}
 }
 
 type PermissionCollectionResponse struct {
