@@ -3,6 +3,9 @@ package utils
 import (
 	"errors"
 	"strings"
+
+	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
 )
 
 // parse sortBy=name.asc,updated_at.desc -> map[string]string
@@ -31,4 +34,17 @@ func QuerySortToMap(sortBy string) (map[string]string, error) {
 	}
 
 	return result, nil
+}
+
+func ValidationErrors(validationErrs validator.ValidationErrors, trans *ut.Translator) map[string][]string {
+	errorFields := map[string][]string{}
+	for _, e := range validationErrs {
+		if trans != nil {
+			errorFields[e.Field()] = append(errorFields[e.Field()], e.Translate(*trans))
+		} else {
+			errorFields[e.Field()] = append(errorFields[e.Field()], e.Tag())
+		}
+	}
+
+	return errorFields
 }

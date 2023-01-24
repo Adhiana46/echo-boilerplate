@@ -8,6 +8,7 @@ type JsonResponse struct {
 	Data       any    `json:"data,omitempty"`
 	Errors     any    `json:"errors,omitempty"`
 	Pagination any    `json:"pagination,omitempty"`
+	Debug      any    `json:"debug,omitempty"`
 }
 
 type Pagination struct {
@@ -30,7 +31,7 @@ func JsonSuccess(status int, message string, data any, pagination any) JsonRespo
 	}
 }
 
-func JsonError(status int, message string, errs any) JsonResponse {
+func JsonError(status int, message string, errs any, debug any) JsonResponse {
 	if message == "" {
 		message = http.StatusText(status)
 	}
@@ -39,5 +40,6 @@ func JsonError(status int, message string, errs any) JsonResponse {
 		Status:  status,
 		Message: message,
 		Errors:  errs,
+		Debug:   debug,
 	}
 }
