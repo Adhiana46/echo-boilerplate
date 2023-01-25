@@ -8,7 +8,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func seedPermissions(db *sql.DB) error {
+type PermissionSeeder struct{}
+
+func (s *PermissionSeeder) Name() string {
+	return "Permission Seeder"
+}
+
+func (s *PermissionSeeder) Up(db *sql.DB) error {
 	menus := []string{
 		"permissions",
 		"roles",
@@ -65,8 +71,8 @@ func seedPermissions(db *sql.DB) error {
 	return nil
 }
 
-func unseedPermissions(db *sql.DB) error {
-	_, err := db.Exec("TRUNCATE permissions")
+func (p *PermissionSeeder) Down(db *sql.DB) error {
+	_, err := db.Exec("TRUNCATE permissions CASCADE")
 	if err != nil {
 		return err
 	}

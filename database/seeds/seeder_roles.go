@@ -7,7 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func seedRoles(db *sql.DB) error {
+type RoleSeeder struct{}
+
+func (s *RoleSeeder) Name() string {
+	return "Role Seeder"
+}
+
+func (s *RoleSeeder) Up(db *sql.DB) error {
 	roles := map[string][]string{
 		"super-admin": {
 			"permissions",
@@ -83,7 +89,7 @@ func seedRoles(db *sql.DB) error {
 	return nil
 }
 
-func unseedRoles(db *sql.DB) error {
+func (p *RoleSeeder) Down(db *sql.DB) error {
 	var err error
 
 	_, err = db.Exec("TRUNCATE role_permissions")
@@ -91,7 +97,7 @@ func unseedRoles(db *sql.DB) error {
 		return err
 	}
 
-	_, err = db.Exec("TRUNCATE roles")
+	_, err = db.Exec("TRUNCATE roles CASCADE")
 	if err != nil {
 		return err
 	}

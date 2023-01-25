@@ -8,7 +8,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func seedUsers(db *sql.DB) error {
+type UserSeeder struct{}
+
+func (s *UserSeeder) Name() string {
+	return "User Seeder"
+}
+
+func (s *UserSeeder) Up(db *sql.DB) error {
 	password, err := utils.HashPassword("pass1234")
 	if err != nil {
 		return err
@@ -61,7 +67,7 @@ func seedUsers(db *sql.DB) error {
 	return nil
 }
 
-func unseedUsers(db *sql.DB) error {
+func (p *UserSeeder) Down(db *sql.DB) error {
 	_, err := db.Exec("TRUNCATE users")
 	if err != nil {
 		return err

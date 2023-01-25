@@ -5,10 +5,17 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"sort"
 )
 
 type Seed struct {
 	db *sql.DB
+}
+
+type SeederInterface interface {
+	Name() string
+	Up(db *sql.DB) error
+	Down(db *sql.DB) error
 }
 
 func NewSeeder(db *sql.DB) *Seed {
@@ -17,30 +24,16 @@ func NewSeeder(db *sql.DB) *Seed {
 	}
 }
 
-type job struct {
-	lbl string
-	f   func(*sql.DB) error
+var seeds []SeederInterface = []SeederInterface{
+	&PermissionSeeder{},
+	&RoleSeeder{},
+	&UserSeeder{},
 }
 
-func (s *Seed) Run(ctx context.Context) error {
-	lists := []job{
-		{
-			lbl: "Permissions Seeder",
-			f:   seedPermissions,
-		},
-		{
-			lbl: "Roles Seeder",
-			f:   seedRoles,
-		},
-		{
-			lbl: "Users Seeder",
-			f:   seedUsers,
-		},
-	}
-
-	for _, j := range lists {
-		log.Println("[Seeder]:\t-", fmt.Sprintf("Running %s", j.lbl))
-		if err := j.f(s.db); err != nil {
+func (s *Seed) Up(ctx context.Context) error {
+	for _, seed := range seeds {
+		log.Println("[Seeder]:\t-", fmt.Sprintf("Running %s", seed.Name()))
+		if err := seed.Up(s.db); err != nil {
 			return err
 		}
 	}
@@ -48,25 +41,14 @@ func (s *Seed) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *Seed) Rollback(ctx context.Context) error {
-	lists := []job{
-		{
-			lbl: "Permissions Seeder",
-			f:   unseedPermissions,
-		},
-		{
-			lbl: "Roles Seeder",
-			f:   unseedRoles,
-		},
-		{
-			lbl: "Users Seeder",
-			f:   unseedUsers,
-		},
-	}
+func (s *Seed) Down(ctx context.Context) error {
+	sort.Slice(seeds, func(i, j int) bool {
+		return i > j
+	})
 
-	for _, j := range lists {
-		log.Println("[Seeder]:\t-", fmt.Sprintf("Rollback %s", j.lbl))
-		if err := j.f(s.db); err != nil {
+	for _, seed := range seeds {
+		log.Println("[Seeder]:\t-", fmt.Sprintf("Rollback %s", seed.Name()))
+		if err := seed.Down(s.db); err != nil {
 			return err
 		}
 	}

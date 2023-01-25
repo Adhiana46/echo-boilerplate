@@ -206,7 +206,7 @@ func runSeeder(db *sql.DB) error {
 	log.Println("[Seeder]:", "Running database seeder")
 
 	seeder := seeds.NewSeeder(db)
-	err := seeder.Run(context.Background())
+	err := seeder.Up(context.Background())
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func rollbackSeeder(db *sql.DB) error {
 	log.Println("[Seeder]:", "Rollback database seeder")
 
 	seeder := seeds.NewSeeder(db)
-	err := seeder.Rollback(context.Background())
+	err := seeder.Down(context.Background())
 	if err != nil {
 		return err
 	}
