@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"errors"
 	"strings"
 
+	"github.com/Adhiana46/echo-boilerplate/pkg/errors"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 )
@@ -20,14 +20,14 @@ func QuerySortToMap(sortBy string) (map[string]string, error) {
 		chunks := strings.Split(raw, ".")
 
 		if len(chunks) != 2 {
-			return nil, errors.New("malformed sortBy query parameter, should be field.orderdirection")
+			return nil, errors.NewBadRequestError("malformed sortBy query parameter, should be field.orderdirection")
 		}
 
 		field, order := chunks[0], chunks[1]
 		order = strings.ToLower(order)
 
 		if order != "asc" && order != "desc" {
-			return nil, errors.New("malformed orderdirection in sortBy query parameter, should be asc or desc")
+			return nil, errors.NewBadRequestError("malformed orderdirection in sortBy query parameter, should be asc or desc")
 		}
 
 		result[field] = order
