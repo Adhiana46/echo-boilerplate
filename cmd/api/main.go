@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -9,23 +8,19 @@ import (
 	"time"
 
 	"github.com/Adhiana46/echo-boilerplate/config"
-	"github.com/Adhiana46/echo-boilerplate/database/seeds"
 	cachePkg "github.com/Adhiana46/echo-boilerplate/pkg/cache"
 	"github.com/Adhiana46/echo-boilerplate/server"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 
-	"database/sql"
-
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 )
 
 var (
-	cfg *config.Config
-	db  *sqlx.DB
+	cfg   *config.Config
+	db    *sqlx.DB
+	cache cachePkg.Cache
 )
 
 func main() {
@@ -44,7 +39,7 @@ func main() {
 	defer db.Close()
 
 	// cache
-	cache, err := openCache(cfg)
+	cache, err = openCache(cfg)
 	if err != nil {
 		log.Panic("[Error][Cache]:", err)
 	}
@@ -57,14 +52,56 @@ func main() {
 
 	// TODO: notif
 
-	handleArgs()
+	run()
+}
 
-	// server
-	srv := server.NewServer(cfg, db, cache)
+func run() {
+	flag.Parse()
+	args := flag.Args()
 
-	if err := srv.Run(); err != nil {
-		log.Panic("[Error][Server]", err)
+	cmd := "serve"
+
+	if len(args) > 0 {
+		cmd = args[0]
 	}
+
+	switch cmd {
+	case "migrate":
+		if err := runMigration(db.DB); err != nil {
+			panic(err)
+		}
+	case "migrate:rollback":
+		if err := rollbackMigration(db.DB); err != nil {
+			panic(err)
+		}
+	case "migrate:fresh":
+		if err := rollbackMigration(db.DB); err != nil {
+			panic(err)
+		}
+		if err := runMigration(db.DB); err != nil {
+			panic(err)
+		}
+		if err := runSeeder(db.DB); err != nil {
+			panic(err)
+		}
+	case "migrate:seed":
+		if err := runSeeder(db.DB); err != nil {
+			panic(err)
+		}
+	case "migrate:unseed":
+		if err := rollbackSeeder(db.DB); err != nil {
+			panic(err)
+		}
+	default:
+		// run server
+		srv := server.NewServer(cfg, db, cache)
+
+		if err := srv.Run(); err != nil {
+			log.Panic("[Error][Server]", err)
+		}
+	}
+
+	os.Exit(0)
 }
 
 func openDb(cfg config.PgConfig) (*sqlx.DB, error) {
@@ -106,126 +143,4 @@ func openCache(cfg *config.Config) (cachePkg.Cache, error) {
 	}
 
 	return instance, err
-}
-
-func handleArgs() {
-	flag.Parse()
-	args := flag.Args()
-
-	if len(args) >= 1 {
-		switch args[0] {
-		case "migrate":
-			if err := runMigration(db.DB); err != nil {
-				panic(err)
-			}
-		case "migrate:rollback":
-			if err := rollbackMigration(db.DB); err != nil {
-				panic(err)
-			}
-		case "migrate:fresh":
-			if err := rollbackMigration(db.DB); err != nil {
-				panic(err)
-			}
-			if err := runMigration(db.DB); err != nil {
-				panic(err)
-			}
-			if err := runSeeder(db.DB); err != nil {
-				panic(err)
-			}
-		case "migrate:seed":
-			if err := runSeeder(db.DB); err != nil {
-				panic(err)
-			}
-		case "migrate:unseed":
-			if err := rollbackSeeder(db.DB); err != nil {
-				panic(err)
-			}
-		}
-
-		os.Exit(0)
-	}
-}
-
-func runMigration(db *sql.DB) error {
-	log.Println("[Migration]:", "Running database migrations...")
-
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		log.Println("[Migration]: ", err)
-		return err
-	}
-
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://./database/migrations",
-		"postgres", driver)
-	if err != nil {
-		log.Println("[Migration]:", err)
-		return err
-	}
-
-	err = m.Up()
-	if err != nil {
-		log.Println("[Migration]:", err)
-		return err
-	}
-
-	log.Println("[Migration]:", "Database migration running successfully")
-
-	return nil
-}
-
-func rollbackMigration(db *sql.DB) error {
-	log.Println("[Migration]:", "Rollback database migrations...")
-
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		log.Println("[Migration]: ", err)
-		return err
-	}
-
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://./database/migrations",
-		"postgres", driver)
-	if err != nil {
-		log.Println("[Migration]:", err)
-		return err
-	}
-
-	err = m.Down()
-	if err != nil {
-		log.Println("[Migration]:", err)
-		return err
-	}
-
-	log.Println("[Migration]:", "Database migration rollback successfully")
-
-	return nil
-}
-
-func runSeeder(db *sql.DB) error {
-	log.Println("[Seeder]:", "Running database seeder")
-
-	seeder := seeds.NewSeeder(db)
-	err := seeder.Up(context.Background())
-	if err != nil {
-		return err
-	}
-
-	log.Println("[Seeder]:", "Seeder running sucessfully")
-
-	return nil
-}
-
-func rollbackSeeder(db *sql.DB) error {
-	log.Println("[Seeder]:", "Rollback database seeder")
-
-	seeder := seeds.NewSeeder(db)
-	err := seeder.Down(context.Background())
-	if err != nil {
-		return err
-	}
-
-	log.Println("[Seeder]:", "Seeder rollbacked sucessfully")
-
-	return nil
 }
