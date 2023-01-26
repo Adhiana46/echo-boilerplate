@@ -4,12 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"time"
 
+	"github.com/Adhiana46/echo-boilerplate/constants"
 	"github.com/Adhiana46/echo-boilerplate/dto"
 	"github.com/Adhiana46/echo-boilerplate/entity"
 	"github.com/Adhiana46/echo-boilerplate/internal/permission"
 	"github.com/Adhiana46/echo-boilerplate/pkg/errors"
+	"github.com/Adhiana46/echo-boilerplate/pkg/utils"
 	"github.com/google/uuid"
 )
 
@@ -43,12 +46,12 @@ func (uc *permissionUsecase) CreatePermission(ctx context.Context, input *dto.Cr
 			Time:  time.Now(),
 			Valid: true,
 		},
-		CreatedBy: 0, // todo get from ctx
+		CreatedBy: sql.NullInt64{}, // todo get from ctx
 		UpdatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
 		},
-		UpdatedBy: 0, // todo get from ctx
+		UpdatedBy: sql.NullInt64{}, // todo get from ctx
 	})
 
 	if err != nil {
@@ -83,7 +86,7 @@ func (uc *permissionUsecase) UpdatePermission(ctx context.Context, input *dto.Up
 		Time:  time.Now(),
 		Valid: true,
 	}
-	e.UpdatedBy = 0 // TODO: user
+	e.UpdatedBy = sql.NullInt64{} // TODO: user
 
 	updatedE, err := uc.repo.Update(ctx, e)
 	if err != nil {
@@ -113,8 +116,42 @@ func (uc *permissionUsecase) Get(ctx context.Context, input *dto.GetPermissionRe
 	return dto.NewPermissionResponse(e), nil
 }
 
-func (uc *permissionUsecase) GetList(ctx context.Context, input *dto.GetListPermissionRequest) (*dto.PermissionResponse, error) {
-	// TODO: validation logic
+func (uc *permissionUsecase) GetList(ctx context.Context, input *dto.GetListPermissionRequest) (*dto.PermissionCollectionResponse, error) {
+	var err error
+	offset := 0                                 // default
+	limit := constants.DEFAULT_PAGINATION_LIMIT // default
+	sorts := map[string]string{}
+	filter := input.Filter
 
-	panic("not implemented.")
+	if input.Limit > 0 {
+		limit = input.Limit
+	}
+
+	if input.Page > 0 {
+		offset = (input.Page - 1) * limit
+	}
+
+	if input.SortBy != "" {
+		sorts, err = utils.QuerySortToMap(input.SortBy)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	rows, err := uc.repo.FindAll(ctx, offset, limit, sorts, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	numrows, err := uc.repo.CountAll(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.NewPermissionCollectionResponse(rows, dto.PaginationResponse{
+		Size:        len(rows),
+		Total:       numrows,
+		TotalPages:  int(math.Ceil(float64(numrows) / float64(limit))),
+		CurrentPage: input.Page,
+	}), nil
 }

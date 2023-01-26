@@ -34,15 +34,28 @@ func NewPermissionResponse(e *entity.Permission) *PermissionResponse {
 		Name:      e.Name,
 		Type:      e.Type,
 		CreatedAt: createdAt,
-		CreatedBy: e.CreatedBy,
+		CreatedBy: int(e.CreatedBy.Int64),
 		UpdatedAt: updatedAt,
-		UpdatedBy: e.UpdatedBy,
+		UpdatedBy: int(e.UpdatedBy.Int64),
 	}
 }
 
 type PermissionCollectionResponse struct {
-	Data       []PermissionResponse `json:"data"`
-	Pagination PaginationResponse   `json:"pagination"`
+	Data       []*PermissionResponse `json:"data"`
+	Pagination PaginationResponse    `json:"pagination"`
+}
+
+func NewPermissionCollectionResponse(rows []*entity.Permission, pagination PaginationResponse) *PermissionCollectionResponse {
+	response := &PermissionCollectionResponse{
+		Data:       []*PermissionResponse{},
+		Pagination: pagination,
+	}
+
+	for _, row := range rows {
+		response.Data = append(response.Data, NewPermissionResponse(row))
+	}
+
+	return response
 }
 
 type CreatePermissionRequest struct {
@@ -67,8 +80,8 @@ type GetPermissionRequest struct {
 }
 
 type GetListPermissionRequest struct {
-	Page   int `query:"page"`
-	Limit  int `query:"limit"`
-	SortBy int `query:"sortBy"`
-	Filter int `query:"filter"`
+	Page   int    `query:"page"`
+	Limit  int    `query:"limit"`
+	SortBy string `query:"sortBy"`
+	Filter string `query:"filter"`
 }

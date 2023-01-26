@@ -15,6 +15,7 @@ type Handler interface {
 	Update() func(echo.Context) error
 	Delete() func(echo.Context) error
 	GetByUuid() func(echo.Context) error
+	GetAll() func(echo.Context) error
 }
 
 type handler struct {
@@ -106,5 +107,26 @@ func (h *handler) GetByUuid() func(echo.Context) error {
 		}
 
 		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res, nil))
+	}
+}
+
+func (h *handler) GetAll() func(echo.Context) error {
+	return func(c echo.Context) error {
+		input := dto.GetListPermissionRequest{}
+
+		if err := c.Bind(&input); err != nil {
+			panic(err)
+		}
+
+		if err := c.Validate(input); err != nil {
+			panic(err)
+		}
+
+		res, err := h.uc.GetList(c.Request().Context(), &input)
+		if err != nil {
+			panic(err)
+		}
+
+		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res.Data, res.Pagination))
 	}
 }

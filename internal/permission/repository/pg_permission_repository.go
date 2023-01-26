@@ -2,9 +2,12 @@ package repository
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/Adhiana46/echo-boilerplate/entity"
 	"github.com/Adhiana46/echo-boilerplate/internal/permission"
+	"github.com/Adhiana46/echo-boilerplate/pkg/errors"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -118,8 +121,46 @@ func (r *pgPermissionRepository) FindByUuid(ctx context.Context, uuid string) (*
 	return e, nil
 }
 
-func (r *pgPermissionRepository) FindAll(ctx context.Context, offset int, limit int) ([]*entity.Permission, error) {
-	panic("Not implemented")
+func (r *pgPermissionRepository) FindAll(ctx context.Context, offset int, limit int, sorts map[string]string, search string) ([]*entity.Permission, error) {
+	sql := `
+		SELECT id, uuid, parent_id, name, type, created_at, created_by, updated_at, updated_by
+		FROM permissions
+	`
+	aWheres := []string{}
+	aOrders := []string{}
+
+	// search
+	if search != "" {
+		aWheres = append(aWheres, fmt.Sprintf("LOWER(name) LIKE '%s'", "%"+search+"%"))
+	}
+	if len(aWheres) > 0 {
+		sql += " WHERE " + strings.Join(aWheres, " AND ")
+	}
+
+	// orders
+	if len(sorts) > 0 {
+		for field, dir := range sorts {
+			if strings.ToLower(dir) != "asc" && strings.ToLower(dir) != "desc" {
+				return nil, errors.NewBadRequestError(fmt.Sprintf("Order direction for field '%s' should be 'asc' or 'desc'", field))
+			}
+
+			aOrders = append(aOrders, fmt.Sprintf("%s %s", field, dir))
+		}
+	}
+	if len(aOrders) > 0 {
+		sql += " ORDER BY " + strings.Join(aOrders, ", ")
+	}
+
+	// limit offset
+	sql += fmt.Sprintf(" OFFSET %v LIMIT %v ", offset, limit)
+
+	rows := []*entity.Permission{}
+	err := r.db.SelectContext(ctx, &rows, sql)
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
 }
 
 func (r *pgPermissionRepository) CountByName(ctx context.Context, name string) (int, error) {
@@ -131,6 +172,30 @@ func (r *pgPermissionRepository) CountByName(ctx context.Context, name string) (
 
 	numrows := 0
 	err := r.db.QueryRow(sql, name).Scan(&numrows)
+	if err != nil {
+		return 0, err
+	}
+
+	return numrows, nil
+}
+
+func (r *pgPermissionRepository) CountAll(ctx context.Context, search string) (int, error) {
+	sql := `
+		SELECT COUNT(id) AS numrows
+		FROM permissions
+	`
+	aWheres := []string{}
+
+	// search
+	if search != "" {
+		aWheres = append(aWheres, fmt.Sprintf("LOWER(name) LIKE '%s'", "%"+search+"%"))
+	}
+	if len(aWheres) > 0 {
+		sql += " WHERE " + strings.Join(aWheres, " AND ")
+	}
+
+	numrows := 0
+	err := r.db.QueryRow(sql).Scan(&numrows)
 	if err != nil {
 		return 0, err
 	}

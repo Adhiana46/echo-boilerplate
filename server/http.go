@@ -153,4 +153,5 @@ func (s *Server) setupRoutes() {
 	groupPermission.PUT("/:uuid", s.permissionHandler.Update())
 	groupPermission.DELETE("/:uuid", s.permissionHandler.Delete())
 	groupPermission.GET("/:uuid", s.permissionHandler.GetByUuid())
+	groupPermission.GET("/", s.permissionHandler.GetAll())
 }
