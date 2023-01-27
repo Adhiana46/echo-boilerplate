@@ -33,16 +33,16 @@ func (h *handler) Store() func(echo.Context) error {
 		input := dto.CreatePermissionRequest{}
 
 		if err := c.Bind(&input); err != nil {
-			panic(err)
+			return err
 		}
 
 		if err := c.Validate(input); err != nil {
-			panic(err)
+			return err
 		}
 
 		res, err := h.uc.CreatePermission(c.Request().Context(), &input)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		return c.JSON(http.StatusCreated, utils.JsonSuccess(http.StatusCreated, "", res, nil))
@@ -54,18 +54,18 @@ func (h *handler) Update() func(echo.Context) error {
 		input := dto.UpdatePermissionRequest{}
 
 		if err := c.Bind(&input); err != nil {
-			panic(err)
+			return err
 		}
 
 		input.Uuid = strings.Trim(c.Param("uuid"), "/")
 
 		if err := c.Validate(input); err != nil {
-			panic(err)
+			return err
 		}
 
 		res, err := h.uc.UpdatePermission(c.Request().Context(), &input)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res, nil))
@@ -79,12 +79,12 @@ func (h *handler) Delete() func(echo.Context) error {
 		}
 
 		if err := c.Validate(input); err != nil {
-			panic(err)
+			return err
 		}
 
 		res, err := h.uc.DeletePermission(c.Request().Context(), &input)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res, nil))
@@ -98,12 +98,12 @@ func (h *handler) GetByUuid() func(echo.Context) error {
 		}
 
 		if err := c.Validate(input); err != nil {
-			panic(err)
+			return err
 		}
 
 		res, err := h.uc.Get(c.Request().Context(), &input)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res, nil))
@@ -115,16 +115,16 @@ func (h *handler) GetAll() func(echo.Context) error {
 		input := dto.GetListPermissionRequest{}
 
 		if err := c.Bind(&input); err != nil {
-			panic(err)
+			return err
 		}
 
 		if err := c.Validate(input); err != nil {
-			panic(err)
+			return err
 		}
 
 		res, err := h.uc.GetList(c.Request().Context(), &input)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res.Data, res.Pagination))
