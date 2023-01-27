@@ -1,6 +1,8 @@
 package utils
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type JsonResponse struct {
 	Status     int    `json:"status"`
