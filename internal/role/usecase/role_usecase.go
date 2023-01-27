@@ -29,7 +29,7 @@ func NewRoleUsecase(roleRepo role.RoleRepository, permRepo permission.Permission
 	}
 }
 
-func (uc *roleUsecase) CreateRole(ctx context.Context, input *dto.CreateRoleRequest) (*dto.RoleResponseWithPermissions, error) {
+func (uc *roleUsecase) CreateRole(ctx context.Context, input *dto.CreateRoleRequest) (*dto.RoleResponse, error) {
 	// Validation
 	numrows, err := uc.roleRepo.CountByName(ctx, input.Name)
 	if err != nil {
@@ -68,7 +68,7 @@ func (uc *roleUsecase) CreateRole(ctx context.Context, input *dto.CreateRoleRequ
 	return dto.NewRoleResponse(row), nil
 }
 
-func (uc *roleUsecase) UpdateRole(ctx context.Context, input *dto.UpdateRoleRequest) (*dto.RoleResponseWithPermissions, error) {
+func (uc *roleUsecase) UpdateRole(ctx context.Context, input *dto.UpdateRoleRequest) (*dto.RoleResponse, error) {
 	e, err := uc.roleRepo.FindByUuid(ctx, input.Uuid)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (uc *roleUsecase) DeleteRole(ctx context.Context, input *dto.DeleteRoleRequ
 	return nil, err
 }
 
-func (uc *roleUsecase) Get(ctx context.Context, input *dto.GetRoleRequest) (*dto.RoleResponseWithPermissions, error) {
+func (uc *roleUsecase) Get(ctx context.Context, input *dto.GetRoleRequest) (*dto.RoleResponse, error) {
 	e, err := uc.roleRepo.FindByUuid(ctx, input.Uuid)
 	if err != nil {
 		return nil, err

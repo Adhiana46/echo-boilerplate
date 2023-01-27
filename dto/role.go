@@ -7,22 +7,13 @@ import (
 )
 
 type RoleResponse struct {
-	Uuid      string `json:"uuid"`
-	Name      string `json:"name"`
-	CreatedAt string `json:"created_at"`
-	CreatedBy int    `json:"created_by"`
-	UpdatedAt string `json:"updated_at"`
-	UpdatedBy int    `json:"updated_by"`
-}
-
-type RoleResponseWithPermissions struct {
 	Uuid        string   `json:"uuid"`
 	Name        string   `json:"name"`
 	CreatedAt   string   `json:"created_at"`
 	CreatedBy   int      `json:"created_by"`
 	UpdatedAt   string   `json:"updated_at"`
 	UpdatedBy   int      `json:"updated_by"`
-	Permissions []string `json:"permissions"`
+	Permissions []string `json:"permissions,omitempty"`
 }
 
 type RoleCollectionResponse struct {
@@ -30,7 +21,7 @@ type RoleCollectionResponse struct {
 	Pagination PaginationResponse `json:"pagination"`
 }
 
-func NewRoleResponse(e *entity.Role) *RoleResponseWithPermissions {
+func NewRoleResponse(e *entity.Role) *RoleResponse {
 	createdAt := ""
 	updatedAt := ""
 	permissions := []string{}
@@ -46,7 +37,7 @@ func NewRoleResponse(e *entity.Role) *RoleResponseWithPermissions {
 		permissions = append(permissions, perm.Name)
 	}
 
-	return &RoleResponseWithPermissions{
+	return &RoleResponse{
 		Uuid:        e.Uuid,
 		Name:        e.Name,
 		CreatedAt:   createdAt,

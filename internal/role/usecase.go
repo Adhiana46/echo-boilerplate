@@ -7,9 +7,9 @@ import (
 )
 
 type RoleUsecase interface {
-	CreateRole(ctx context.Context, input *dto.CreateRoleRequest) (*dto.RoleResponseWithPermissions, error)
-	UpdateRole(ctx context.Context, input *dto.UpdateRoleRequest) (*dto.RoleResponseWithPermissions, error)
+	CreateRole(ctx context.Context, input *dto.CreateRoleRequest) (*dto.RoleResponse, error)
+	UpdateRole(ctx context.Context, input *dto.UpdateRoleRequest) (*dto.RoleResponse, error)
 	DeleteRole(ctx context.Context, input *dto.DeleteRoleRequest) (*dto.RoleResponse, error)
-	Get(ctx context.Context, input *dto.GetRoleRequest) (*dto.RoleResponseWithPermissions, error)
+	Get(ctx context.Context, input *dto.GetRoleRequest) (*dto.RoleResponse, error)
 	GetList(ctx context.Context, input *dto.GetListRoleRequest) (*dto.RoleCollectionResponse, error)
 }
