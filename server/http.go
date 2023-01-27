@@ -18,6 +18,10 @@ import (
 	roleHttpHandler "github.com/Adhiana46/echo-boilerplate/internal/role/delivery/http"
 	roleRepo "github.com/Adhiana46/echo-boilerplate/internal/role/repository"
 	roleUsecase "github.com/Adhiana46/echo-boilerplate/internal/role/usecase"
+	"github.com/Adhiana46/echo-boilerplate/internal/user"
+	userHttpHandler "github.com/Adhiana46/echo-boilerplate/internal/user/delivery/http"
+	userRepo "github.com/Adhiana46/echo-boilerplate/internal/user/repository"
+	userUsecase "github.com/Adhiana46/echo-boilerplate/internal/user/usecase"
 	cachePkg "github.com/Adhiana46/echo-boilerplate/pkg/cache"
 	"github.com/Adhiana46/echo-boilerplate/pkg/errors"
 	"github.com/Adhiana46/echo-boilerplate/pkg/utils"
@@ -37,14 +41,17 @@ type Server struct {
 	// repositories
 	repoPermission permission.PermissionRepository
 	repoRole       role.RoleRepository
+	repoUser       user.UserRepository
 
 	// usecases
 	usecasePermission permission.PermissionUsecase
 	usecaseRole       role.RoleUsecase
+	usecaseUser       user.UserUsecase
 
 	// handlers
 	permissionHandler permissionHttpHandler.Handler
 	roleHandler       roleHttpHandler.Handler
+	userHandler       userHttpHandler.Handler
 }
 
 func NewServer(cfg *config.Config, db *sqlx.DB, cache cachePkg.Cache) *Server {
@@ -144,16 +151,19 @@ func (s *Server) Run() error {
 func (s *Server) setupRepo() {
 	s.repoPermission = permissionRepo.NewPgPermissionRepository(s.db)
 	s.repoRole = roleRepo.NewPgRoleRepository(s.db)
+	s.repoUser = userRepo.NewPgRoleRepository(s.db, s.repoRole)
 }
 
 func (s *Server) setupUsecase() {
 	s.usecasePermission = permissionUsecase.NewPermissionUsecase(s.repoPermission)
 	s.usecaseRole = roleUsecase.NewRoleUsecase(s.repoRole, s.repoPermission)
+	s.usecaseUser = userUsecase.NewUserUsecase(s.repoUser, s.repoRole)
 }
 
 func (s *Server) setupHttpHandler() {
 	s.permissionHandler = permissionHttpHandler.NewPermissionHttpHandler(s.usecasePermission)
-	s.roleHandler = roleHttpHandler.NewPermissionHttpHandler(s.usecaseRole)
+	s.roleHandler = roleHttpHandler.NewRoleHttpHandler(s.usecaseRole)
+	s.userHandler = userHttpHandler.NewUserHttpHandler(s.usecaseUser)
 }
 
 func (s *Server) setupRoutes() {
@@ -170,4 +180,12 @@ func (s *Server) setupRoutes() {
 	groupRole.DELETE("/:uuid", s.roleHandler.Delete())
 	groupRole.GET("/:uuid", s.roleHandler.GetByUuid())
 	groupRole.GET("/", s.roleHandler.GetAll())
+
+	groupUser := s.e.Group("/api/v1/users")
+	groupUser.POST("/", s.userHandler.Store())
+	groupUser.PUT("/:uuid", s.userHandler.Update())
+	groupUser.DELETE("/:uuid", s.userHandler.Delete())
+	groupUser.GET("/:uuid", s.userHandler.GetByUuid())
+	groupUser.GET("/", s.userHandler.GetAll())
+
 }

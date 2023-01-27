@@ -22,7 +22,7 @@ type handler struct {
 	uc role.RoleUsecase
 }
 
-func NewPermissionHttpHandler(uc role.RoleUsecase) Handler {
+func NewRoleHttpHandler(uc role.RoleUsecase) Handler {
 	return &handler{
 		uc: uc,
 	}

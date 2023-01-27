@@ -12,6 +12,7 @@ type RoleRepository interface {
 	Destroy(ctx context.Context, e *entity.Role) error
 	FindById(ctx context.Context, id int) (*entity.Role, error)
 	FindByUuid(ctx context.Context, uuid string) (*entity.Role, error)
+	FindByName(ctx context.Context, name string) (*entity.Role, error)
 	FindAll(ctx context.Context, offset int, limit int, sorts map[string]string, search string) ([]*entity.Role, error)
 
 	CountByName(ctx context.Context, name string) (int, error)

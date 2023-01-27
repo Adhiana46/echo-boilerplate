@@ -203,6 +203,35 @@ func (r *pgRoleRepository) FindByUuid(ctx context.Context, uuid string) (*entity
 	return e, nil
 }
 
+func (r *pgRoleRepository) FindByName(ctx context.Context, name string) (*entity.Role, error) {
+	sql := `
+		SELECT id, uuid, name, created_at, created_by, updated_at, updated_by
+		FROM roles
+		WHERE name = $1
+	`
+	sqlPerms := `
+		SELECT id, uuid, parent_id, name, type, created_at, created_by, updated_at, updated_by
+		FROM permissions
+		WHERE id IN (SELECT permission_id FROM role_permissions WHERE role_id = $1)
+	`
+
+	e := &entity.Role{}
+	err := r.db.GetContext(ctx, e, sql, name)
+	if err != nil {
+		return nil, err
+	}
+
+	perms := []*entity.Permission{}
+	err = r.db.SelectContext(ctx, &perms, sqlPerms, e.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	e.Permissions = perms
+
+	return e, nil
+}
+
 func (r *pgRoleRepository) FindAll(ctx context.Context, offset int, limit int, sorts map[string]string, search string) ([]*entity.Role, error) {
 	sql := `
 		SELECT id, uuid, name, created_at, created_by, updated_at, updated_by
