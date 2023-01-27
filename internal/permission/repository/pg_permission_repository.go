@@ -163,6 +163,28 @@ func (r *pgPermissionRepository) FindAll(ctx context.Context, offset int, limit 
 	return rows, nil
 }
 
+func (r *pgPermissionRepository) FindAllByNames(ctx context.Context, names []string) ([]*entity.Permission, error) {
+	sql, args, err := sqlx.In(`
+		SELECT id, uuid, parent_id, name, type, created_at, created_by, updated_at, updated_by
+		FROM permissions
+		WHERE name IN (?)
+	`, names)
+
+	sql = r.db.Rebind(sql)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows := []*entity.Permission{}
+	err = r.db.SelectContext(ctx, &rows, sql, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
+}
+
 func (r *pgPermissionRepository) CountByName(ctx context.Context, name string) (int, error) {
 	sql := `
 		SELECT COUNT(id) AS numrows

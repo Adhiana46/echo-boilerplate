@@ -67,7 +67,12 @@ func NewServer(cfg *config.Config, db *sqlx.DB, cache cachePkg.Cache) *Server {
 		var statusCode int = 500
 		var message string = ""
 		var errorsData any = nil
-		stackTraces := strings.Split(strings.ReplaceAll(string(debug.Stack()), "\t", "     "), "\n")
+		stackTraces := []string{
+			err.Error(),
+			"",
+			"",
+		}
+		stackTraces = append(stackTraces, strings.Split(strings.ReplaceAll(string(debug.Stack()), "\t", "     "), "\n")...)
 
 		if err == sql.ErrNoRows {
 			statusCode = 404
