@@ -14,6 +14,7 @@ type Config struct {
 	Cache     CacheConfig     `yaml:"cache"`
 	Redis     RedisConfig     `yaml:"redis"`
 	Memcached MemcachedConfig `yaml:"memcached"`
+	Firebase  FirebaseConfig  `yaml:"firebase"`
 }
 
 type AppConfig struct {
@@ -47,6 +48,19 @@ type RedisConfig struct {
 
 type MemcachedConfig struct {
 	Hosts []string `env-separator:"|" env:"MEMCACHED_HOSTS" yaml:"hosts"`
+}
+
+type FirebaseConfig struct {
+	Type                    string `env:"FIREBASE_TYPE" yaml:"type" json:"type"`
+	ProjectId               string `env:"FIREBASE_PROJECT_ID" yaml:"project_id" json:"project_id"`
+	PrivateKeyId            string `env:"FIREBASE_PRIVATE_KEY_ID" yaml:"private_key_id" json:"private_key_id"`
+	PrivateKey              string `env:"FIREBASE_PRIVATE_KEY" yaml:"private_key" json:"private_key"`
+	ClientEmail             string `env:"FIREBASE_CLIENT_EMAIL" yaml:"client_email" json:"client_email"`
+	ClientId                string `env:"FIREBASE_CLIENT_ID" yaml:"client_id" json:"client_id"`
+	AuthURI                 string `env:"FIREBASE_AUTH_URI" yaml:"auth_uri" json:"auth_uri"`
+	TokenURI                string `env:"FIREBASE_TOKEN_URI" yaml:"token_uri" json:"token_uri"`
+	AuthProviderX509CertURL string `env:"FIREBASE_PROVIDER_X509_CERT_URL" yaml:"auth_provider_x509_cert_url" json:"auth_provider_x509_cert_url"`
+	ClientX509CertUrl       string `env:"FIREBASE_CLIENT_X509_CERT_URL" yaml:"client_x509_cert_url" json:"client_x509_cert_url"`
 }
 
 func LoadConfig() (*Config, error) {
