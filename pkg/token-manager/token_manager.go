@@ -3,9 +3,10 @@ package tokenmanager
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
-	"github.com/Adhiana46/echo-boilerplate/entity"
+	"github.com/Adhiana46/echo-boilerplate/dto"
 	"github.com/Adhiana46/echo-boilerplate/pkg/cache"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -32,7 +33,7 @@ func NewTokenManager(secretKey string, cache cache.Cache) *TokenManager {
 	}
 }
 
-func (r *TokenManager) GenerateToken(claims *entity.UserClaims) (string, error) {
+func (r *TokenManager) GenerateToken(claims *dto.UserClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenStr, err := token.SignedString([]byte(r.secretKey))
@@ -44,8 +45,8 @@ func (r *TokenManager) GenerateToken(claims *entity.UserClaims) (string, error) 
 }
 
 // Check if token is valid (signature valid, not-expire, not-blacklisted)
-func (r *TokenManager) ParseToken(tokenStr string) (*jwt.Token, *entity.UserClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenStr, &entity.UserClaims{}, r.secretKeyFn)
+func (r *TokenManager) ParseToken(tokenStr string) (*jwt.Token, *dto.UserClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &dto.UserClaims{}, r.secretKeyFn)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -73,12 +74,13 @@ func (r *TokenManager) ParseToken(tokenStr string) (*jwt.Token, *entity.UserClai
 		}
 	}
 
-	claims, ok := token.Claims.(entity.UserClaims)
+	claims, ok := token.Claims.(*dto.UserClaims)
 	if !ok {
+		log.Println("NOT OK")
 		return nil, nil, ErrInvalidToken
 	}
 
-	return token, &claims, nil
+	return token, claims, nil
 }
 
 // blacklist token

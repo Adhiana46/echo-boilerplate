@@ -12,4 +12,9 @@ type UserUsecase interface {
 	DeleteUser(ctx context.Context, input *dto.DeleteUserRequest) (*dto.UserResponse, error)
 	Get(ctx context.Context, input *dto.GetUserRequest) (*dto.UserResponse, error)
 	GetList(ctx context.Context, input *dto.GetListUserRequest) (*dto.UserCollectionResponse, error)
+
+	// Auth
+	SignIn(ctx context.Context, input *dto.SignInRequest) (*dto.SignInResponse, error)
+	SignOut(ctx context.Context, input *dto.SignOutRequest) (*dto.SignOutResponse, error)
+	RefreshToken(ctx context.Context, input *dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error)
 }

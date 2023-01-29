@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	App       AppConfig       `yaml:"app"`
+	JWT       JWTConfig       `yaml:"jwt"`
 	Http      HttpConfig      `yaml:"http"`
 	Pg        PgConfig        `yaml:"postgres"`
 	Cache     CacheConfig     `yaml:"cache"`
@@ -61,6 +62,10 @@ type FirebaseConfig struct {
 	TokenURI                string `env:"FIREBASE_TOKEN_URI" yaml:"token_uri" json:"token_uri"`
 	AuthProviderX509CertURL string `env:"FIREBASE_PROVIDER_X509_CERT_URL" yaml:"auth_provider_x509_cert_url" json:"auth_provider_x509_cert_url"`
 	ClientX509CertUrl       string `env:"FIREBASE_CLIENT_X509_CERT_URL" yaml:"client_x509_cert_url" json:"client_x509_cert_url"`
+}
+
+type JWTConfig struct {
+	SecretKey string `env:"JWT_SECRET" yaml:"secret"`
 }
 
 func LoadConfig() (*Config, error) {

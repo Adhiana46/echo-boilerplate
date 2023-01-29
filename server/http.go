@@ -24,6 +24,7 @@ import (
 	userUsecase "github.com/Adhiana46/echo-boilerplate/internal/user/usecase"
 	cachePkg "github.com/Adhiana46/echo-boilerplate/pkg/cache"
 	"github.com/Adhiana46/echo-boilerplate/pkg/errors"
+	tokenmanager "github.com/Adhiana46/echo-boilerplate/pkg/token-manager"
 	"github.com/Adhiana46/echo-boilerplate/pkg/utils"
 	validatorPkg "github.com/Adhiana46/echo-boilerplate/pkg/validator"
 	"github.com/go-playground/validator/v10"
@@ -33,15 +34,17 @@ import (
 )
 
 type Server struct {
-	e     *echo.Echo
-	cfg   *config.Config
-	db    *sqlx.DB
-	cache cachePkg.Cache
+	e            *echo.Echo
+	cfg          *config.Config
+	db           *sqlx.DB
+	cache        cachePkg.Cache
+	tokenManager *tokenmanager.TokenManager
 
 	// repositories
 	repoPermission permission.PermissionRepository
 	repoRole       role.RoleRepository
 	repoUser       user.UserRepository
+	repoUserDevice user.UserDeviceRepository
 
 	// usecases
 	usecasePermission permission.PermissionUsecase
@@ -54,7 +57,7 @@ type Server struct {
 	userHandler       userHttpHandler.Handler
 }
 
-func NewServer(cfg *config.Config, db *sqlx.DB, cache cachePkg.Cache) *Server {
+func NewServer(cfg *config.Config, db *sqlx.DB, cache cachePkg.Cache, tokenManager *tokenmanager.TokenManager) *Server {
 	// Validator
 	validate := validator.New()
 	// register function to get tag name from json tags.
@@ -129,10 +132,11 @@ func NewServer(cfg *config.Config, db *sqlx.DB, cache cachePkg.Cache) *Server {
 	})
 
 	srv := &Server{
-		e:     e,
-		cfg:   cfg,
-		db:    db,
-		cache: cache,
+		e:            e,
+		cfg:          cfg,
+		db:           db,
+		cache:        cache,
+		tokenManager: tokenManager,
 	}
 
 	srv.setupRepo()
@@ -151,13 +155,14 @@ func (s *Server) Run() error {
 func (s *Server) setupRepo() {
 	s.repoPermission = permissionRepo.NewPgPermissionRepository(s.db)
 	s.repoRole = roleRepo.NewPgRoleRepository(s.db)
-	s.repoUser = userRepo.NewPgRoleRepository(s.db, s.repoRole)
+	s.repoUser = userRepo.NewPgUserRepository(s.db, s.repoRole)
+	s.repoUserDevice = userRepo.NewPgUserDeviceRepository(s.db)
 }
 
 func (s *Server) setupUsecase() {
 	s.usecasePermission = permissionUsecase.NewPermissionUsecase(s.repoPermission)
 	s.usecaseRole = roleUsecase.NewRoleUsecase(s.repoRole, s.repoPermission)
-	s.usecaseUser = userUsecase.NewUserUsecase(s.repoUser, s.repoRole)
+	s.usecaseUser = userUsecase.NewUserUsecase(s.repoUser, s.repoRole, s.repoUserDevice, s.tokenManager)
 }
 
 func (s *Server) setupHttpHandler() {
@@ -188,4 +193,8 @@ func (s *Server) setupRoutes() {
 	groupUser.GET("/:uuid", s.userHandler.GetByUuid())
 	groupUser.GET("/", s.userHandler.GetAll())
 
+	groupAuth := s.e.Group("/api/v1/auth")
+	groupAuth.POST("/signin/", s.userHandler.SignIn())
+	groupAuth.POST("/signout/", s.userHandler.SignOut())
+	groupAuth.POST("/refresh-token/", s.userHandler.RefreshToken())
 }

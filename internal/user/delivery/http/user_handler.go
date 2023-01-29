@@ -16,6 +16,10 @@ type Handler interface {
 	Delete() func(echo.Context) error
 	GetByUuid() func(echo.Context) error
 	GetAll() func(echo.Context) error
+
+	SignIn() func(echo.Context) error
+	SignOut() func(echo.Context) error
+	RefreshToken() func(echo.Context) error
 }
 
 type handler struct {
@@ -128,5 +132,68 @@ func (h *handler) GetAll() func(echo.Context) error {
 		}
 
 		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res.Data, res.Pagination))
+	}
+}
+
+func (h *handler) SignIn() func(echo.Context) error {
+	return func(c echo.Context) error {
+		input := dto.SignInRequest{}
+
+		if err := c.Bind(&input); err != nil {
+			return err
+		}
+
+		if err := c.Validate(input); err != nil {
+			return err
+		}
+
+		res, err := h.uc.SignIn(c.Request().Context(), &input)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res, nil))
+	}
+}
+
+func (h *handler) SignOut() func(echo.Context) error {
+	return func(c echo.Context) error {
+		input := dto.SignOutRequest{}
+
+		if err := c.Bind(&input); err != nil {
+			return err
+		}
+
+		if err := c.Validate(input); err != nil {
+			return err
+		}
+
+		res, err := h.uc.SignOut(c.Request().Context(), &input)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res, nil))
+	}
+}
+
+func (h *handler) RefreshToken() func(echo.Context) error {
+	return func(c echo.Context) error {
+		input := dto.RefreshTokenRequest{}
+
+		if err := c.Bind(&input); err != nil {
+			return err
+		}
+
+		if err := c.Validate(input); err != nil {
+			return err
+		}
+
+		res, err := h.uc.RefreshToken(c.Request().Context(), &input)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(http.StatusOK, utils.JsonSuccess(http.StatusOK, "", res, nil))
 	}
 }

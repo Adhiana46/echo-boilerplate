@@ -17,7 +17,7 @@ type pgUserRepository struct {
 	roleRepo role.RoleRepository
 }
 
-func NewPgRoleRepository(db *sqlx.DB, roleRepo role.RoleRepository) user.UserRepository {
+func NewPgUserRepository(db *sqlx.DB, roleRepo role.RoleRepository) user.UserRepository {
 	return &pgUserRepository{
 		db:       db,
 		roleRepo: roleRepo,
@@ -133,6 +133,29 @@ func (r *pgUserRepository) FindByUuid(ctx context.Context, uuid string) (*entity
 
 	row := &entity.User{}
 	err := r.db.GetContext(ctx, row, sql, uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := r.roleRepo.FindById(ctx, row.RoleId)
+	if err != nil {
+		return nil, err
+	}
+
+	row.Role = role
+
+	return row, nil
+}
+
+func (r *pgUserRepository) FindByUsernameOrEmail(ctx context.Context, username string) (*entity.User, error) {
+	sql := `
+		SELECT id, uuid, username, email, password, name, role_id, status, last_login_at, created_at, created_by, updated_at, updated_by
+		FROM users
+		WHERE (username = $1 OR email = $1)
+	`
+
+	row := &entity.User{}
+	err := r.db.GetContext(ctx, row, sql, username)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/Adhiana46/echo-boilerplate/config"
 	cachePkg "github.com/Adhiana46/echo-boilerplate/pkg/cache"
+	tokenmanager "github.com/Adhiana46/echo-boilerplate/pkg/token-manager"
 	"github.com/Adhiana46/echo-boilerplate/server"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -18,9 +19,10 @@ import (
 )
 
 var (
-	cfg   *config.Config
-	db    *sqlx.DB
-	cache cachePkg.Cache
+	cfg          *config.Config
+	db           *sqlx.DB
+	cache        cachePkg.Cache
+	tokenManager *tokenmanager.TokenManager
 )
 
 func main() {
@@ -47,6 +49,8 @@ func main() {
 	if cache != nil {
 		defer cache.Close()
 	}
+
+	tokenManager = tokenmanager.NewTokenManager(cfg.JWT.SecretKey, cache)
 
 	// TODO: documentstore
 
@@ -94,7 +98,7 @@ func run() {
 		}
 	default:
 		// run server
-		srv := server.NewServer(cfg, db, cache)
+		srv := server.NewServer(cfg, db, cache, tokenManager)
 
 		if err := srv.Run(); err != nil {
 			log.Panic("[Error][Server]", err)
