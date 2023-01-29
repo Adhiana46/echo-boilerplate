@@ -34,7 +34,15 @@ func (c *redisCache) Set(key string, value string, expSecond int32) error {
 func (c *redisCache) Get(key string) (string, error) {
 	ctx := context.Background()
 
-	return c.rdb.Get(ctx, key).Result()
+	result, err := c.rdb.Get(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", ErrCacheNil
+		}
+		return "", err
+	}
+
+	return result, nil
 }
 
 func (c *redisCache) Close() error {

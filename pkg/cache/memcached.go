@@ -30,6 +30,9 @@ func (c *mcCache) Set(key string, value string, expSecond int32) error {
 func (c *mcCache) Get(key string) (string, error) {
 	item, err := c.mc.Get(key)
 	if err != nil {
+		if err == memcache.ErrCacheMiss {
+			return "", ErrCacheNil
+		}
 		return "", err
 	}
 
