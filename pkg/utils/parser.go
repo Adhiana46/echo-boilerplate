@@ -1,12 +1,28 @@
 package utils
 
 import (
+	"context"
 	"strings"
 
+	"github.com/Adhiana46/echo-boilerplate/dto"
 	"github.com/Adhiana46/echo-boilerplate/pkg/errors"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 )
+
+func GetUserFromContext(ctx context.Context) *dto.UserResponseWithID {
+	rawValue := ctx.Value("user")
+	if rawValue == nil {
+		return nil
+	}
+
+	user, ok := rawValue.(*dto.UserResponseWithID)
+	if !ok {
+		return nil
+	}
+
+	return user
+}
 
 // parse sortBy=name.asc,updated_at.desc -> map[string]string
 func QuerySortToMap(sortBy string) (map[string]string, error) {
