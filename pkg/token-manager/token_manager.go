@@ -44,16 +44,14 @@ func (r *TokenManager) GenerateToken(claims *entity.UserClaims) (string, error) 
 }
 
 // Check if token is valid (signature valid, not-expire, not-blacklisted)
-func (r *TokenManager) ParseToken(tokenStr string) (*jwt.Token, error) {
-	claims := &entity.UserClaims{}
-
-	token, err := jwt.ParseWithClaims(tokenStr, claims, r.secretKeyFn)
+func (r *TokenManager) ParseToken(tokenStr string) (*jwt.Token, *entity.UserClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &entity.UserClaims{}, r.secretKeyFn)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if !token.Valid {
-		return nil, ErrInvalidToken
+		return nil, nil, ErrInvalidToken
 	}
 
 	// check if token is blacklisted
@@ -61,36 +59,35 @@ func (r *TokenManager) ParseToken(tokenStr string) (*jwt.Token, error) {
 	if r.cache != nil {
 		cacheResult, err := r.cache.Get(cacheKey)
 		if err != nil && err != cache.ErrCacheNil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if cacheResult == "1" {
-			return nil, ErrBlacklistedToken
+			return nil, nil, ErrBlacklistedToken
 		}
 	} else {
 		val, isExists := blacklistedTokens[cacheKey]
 
 		if isExists && val == "1" {
-			return nil, ErrBlacklistedToken
+			return nil, nil, ErrBlacklistedToken
 		}
 	}
 
-	return token, nil
+	claims, ok := token.Claims.(entity.UserClaims)
+	if !ok {
+		return nil, nil, ErrInvalidToken
+	}
+
+	return token, &claims, nil
 }
 
 // blacklist token
 func (r *TokenManager) BlacklistToken(tokenStr string) error {
 	cacheKey := fmt.Sprintf(cacheBlacklistFmt, tokenStr)
 
-	token, err := r.ParseToken(tokenStr)
+	_, claims, err := r.ParseToken(tokenStr)
 	if err != nil {
 		return err
-	}
-
-	claims, ok := token.Claims.(*entity.UserClaims)
-
-	if !ok {
-		return ErrInvalidToken
 	}
 
 	expireAt := claims.ExpiresAt.Time.Unix() - time.Now().Unix()
