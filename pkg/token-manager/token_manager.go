@@ -34,7 +34,7 @@ func NewTokenManager(secretKey string, cache cache.Cache) *TokenManager {
 }
 
 func (r *TokenManager) GenerateToken(claims *dto.UserClaims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 
 	tokenStr, err := token.SignedString([]byte(r.secretKey))
 	if err != nil {
