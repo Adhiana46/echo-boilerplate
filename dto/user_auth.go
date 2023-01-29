@@ -7,15 +7,15 @@ import (
 
 func NewUserClaims(eUser *entity.User, eDevice *entity.UserDevice, regClaims jwt.RegisteredClaims) *UserClaims {
 	return &UserClaims{
-		User:             NewUserResponse(eUser),
+		User:             NewUserResponseWithID(eUser),
 		Device:           NewUserDevice(eDevice),
 		RegisteredClaims: regClaims,
 	}
 }
 
 type UserClaims struct {
-	User   *UserResponse `json:"user,omitempty"`
-	Device *UserDevice   `json:"device,omitempty"`
+	User   *UserResponseWithID `json:"user,omitempty"`
+	Device *UserDevice         `json:"device,omitempty"`
 	jwt.RegisteredClaims
 }
 

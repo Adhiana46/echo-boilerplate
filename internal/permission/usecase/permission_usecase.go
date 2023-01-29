@@ -37,6 +37,21 @@ func (uc *permissionUsecase) CreatePermission(ctx context.Context, input *dto.Cr
 		return nil, errors.NewBadRequestError(fmt.Sprintf("Permission with name '%s' already exists", input.Name))
 	}
 
+	createdBy := sql.NullInt64{}
+	updatedBy := sql.NullInt64{}
+	user := utils.GetUserFromContext(ctx)
+	if user != nil {
+		createdBy = sql.NullInt64{
+			Int64: int64(user.ID),
+			Valid: true,
+		}
+
+		updatedBy = sql.NullInt64{
+			Int64: int64(user.ID),
+			Valid: true,
+		}
+	}
+
 	e, err := uc.repo.Create(ctx, &entity.Permission{
 		Uuid:     uuid.NewString(),
 		ParentId: input.ParentId,
@@ -46,12 +61,12 @@ func (uc *permissionUsecase) CreatePermission(ctx context.Context, input *dto.Cr
 			Time:  time.Now(),
 			Valid: true,
 		},
-		CreatedBy: sql.NullInt64{}, // todo get from ctx
+		CreatedBy: createdBy,
 		UpdatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
 		},
-		UpdatedBy: sql.NullInt64{}, // todo get from ctx
+		UpdatedBy: updatedBy,
 	})
 
 	if err != nil {
@@ -79,6 +94,15 @@ func (uc *permissionUsecase) UpdatePermission(ctx context.Context, input *dto.Up
 		}
 	}
 
+	updatedBy := sql.NullInt64{}
+	user := utils.GetUserFromContext(ctx)
+	if user != nil {
+		updatedBy = sql.NullInt64{
+			Int64: int64(user.ID),
+			Valid: true,
+		}
+	}
+
 	e.ParentId = input.ParentId
 	e.Name = input.Name
 	e.Type = input.Type
@@ -86,7 +110,7 @@ func (uc *permissionUsecase) UpdatePermission(ctx context.Context, input *dto.Up
 		Time:  time.Now(),
 		Valid: true,
 	}
-	e.UpdatedBy = sql.NullInt64{} // TODO: user
+	e.UpdatedBy = updatedBy
 
 	updatedE, err := uc.repo.Update(ctx, e)
 	if err != nil {

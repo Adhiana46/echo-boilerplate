@@ -45,6 +45,21 @@ func (uc *roleUsecase) CreateRole(ctx context.Context, input *dto.CreateRoleRequ
 		return nil, err
 	}
 
+	createdBy := sql.NullInt64{}
+	updatedBy := sql.NullInt64{}
+	user := utils.GetUserFromContext(ctx)
+	if user != nil {
+		createdBy = sql.NullInt64{
+			Int64: int64(user.ID),
+			Valid: true,
+		}
+
+		updatedBy = sql.NullInt64{
+			Int64: int64(user.ID),
+			Valid: true,
+		}
+	}
+
 	row, err := uc.roleRepo.Create(ctx, &entity.Role{
 		Uuid: uuid.NewString(),
 		Name: input.Name,
@@ -52,12 +67,12 @@ func (uc *roleUsecase) CreateRole(ctx context.Context, input *dto.CreateRoleRequ
 			Time:  time.Now(),
 			Valid: true,
 		},
-		CreatedBy: sql.NullInt64{}, // TODO:
+		CreatedBy: createdBy,
 		UpdatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
 		},
-		UpdatedBy:   sql.NullInt64{}, // TODO:
+		UpdatedBy:   updatedBy,
 		Permissions: permissions,
 	})
 
@@ -91,13 +106,22 @@ func (uc *roleUsecase) UpdateRole(ctx context.Context, input *dto.UpdateRoleRequ
 		return nil, err
 	}
 
+	updatedBy := sql.NullInt64{}
+	user := utils.GetUserFromContext(ctx)
+	if user != nil {
+		updatedBy = sql.NullInt64{
+			Int64: int64(user.ID),
+			Valid: true,
+		}
+	}
+
 	e.Name = input.Name
 	e.Permissions = permissions
 	e.UpdatedAt = sql.NullTime{
 		Time:  time.Now(),
 		Valid: true,
 	}
-	e.UpdatedBy = sql.NullInt64{} // TODO: user
+	e.UpdatedBy = updatedBy
 
 	// Update
 	updatedE, err := uc.roleRepo.Update(ctx, e)

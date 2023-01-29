@@ -71,6 +71,21 @@ func (uc *userUsecase) CreateUser(ctx context.Context, input *dto.CreateUserRequ
 		return nil, err
 	}
 
+	createdBy := sql.NullInt64{}
+	updatedBy := sql.NullInt64{}
+	user := utils.GetUserFromContext(ctx)
+	if user != nil {
+		createdBy = sql.NullInt64{
+			Int64: int64(user.ID),
+			Valid: true,
+		}
+
+		updatedBy = sql.NullInt64{
+			Int64: int64(user.ID),
+			Valid: true,
+		}
+	}
+
 	row, err := uc.userRepo.Create(ctx, &entity.User{
 		Uuid:        uuid.NewString(),
 		Username:    input.Username,
@@ -84,12 +99,12 @@ func (uc *userUsecase) CreateUser(ctx context.Context, input *dto.CreateUserRequ
 			Time:  time.Now(),
 			Valid: true,
 		},
-		CreatedBy: sql.NullInt64{}, // TODO
+		CreatedBy: createdBy,
 		UpdatedAt: sql.NullTime{
 			Time:  time.Now(),
 			Valid: true,
 		},
-		UpdatedBy: sql.NullInt64{}, // TODO
+		UpdatedBy: updatedBy,
 		Role:      role,
 	})
 
@@ -135,6 +150,15 @@ func (uc *userUsecase) UpdateUser(ctx context.Context, input *dto.UpdateUserRequ
 		return nil, errors.NewBadRequestError(fmt.Sprintf("Role '%s' is not exists", input.Role))
 	}
 
+	updatedBy := sql.NullInt64{}
+	user := utils.GetUserFromContext(ctx)
+	if user != nil {
+		updatedBy = sql.NullInt64{
+			Int64: int64(user.ID),
+			Valid: true,
+		}
+	}
+
 	// Update e
 	e.Name = input.Name
 	e.Username = input.Username
@@ -147,7 +171,7 @@ func (uc *userUsecase) UpdateUser(ctx context.Context, input *dto.UpdateUserRequ
 		Time:  time.Now(),
 		Valid: true,
 	}
-	e.UpdatedBy = sql.NullInt64{} // TODO: user
+	e.UpdatedBy = updatedBy
 	if input.Password != "" {
 		hashedPassword, err := utils.HashPassword(input.Password)
 		if err != nil {

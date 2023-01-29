@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Adhiana46/echo-boilerplate/config"
+	"github.com/Adhiana46/echo-boilerplate/dto"
 	"github.com/Adhiana46/echo-boilerplate/internal/permission"
 	permissionHttpHandler "github.com/Adhiana46/echo-boilerplate/internal/permission/delivery/http"
 	permissionRepo "github.com/Adhiana46/echo-boilerplate/internal/permission/repository"
@@ -28,7 +30,9 @@ import (
 	"github.com/Adhiana46/echo-boilerplate/pkg/utils"
 	validatorPkg "github.com/Adhiana46/echo-boilerplate/pkg/validator"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/jmoiron/sqlx"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -172,21 +176,53 @@ func (s *Server) setupHttpHandler() {
 }
 
 func (s *Server) setupRoutes() {
-	groupPermission := s.e.Group("/api/v1/permissions")
+	jwtAuthMiddleware := echojwt.WithConfig(echojwt.Config{
+		ErrorHandler: func(c echo.Context, err error) error {
+			if err != nil {
+				return errors.NewUnauthorizedError("Unauthorized")
+			}
+
+			return nil
+		},
+		ParseTokenFunc: func(c echo.Context, auth string) (interface{}, error) {
+			token, _, err := s.tokenManager.ParseToken(auth)
+			if err != nil {
+				return nil, err
+			}
+
+			return token, nil
+		},
+		SuccessHandler: func(c echo.Context) {
+			token := c.Get("user").(*jwt.Token)
+			claims := token.Claims.(*dto.UserClaims)
+
+			// Set echo context (useless btw)
+			c.Set("user", claims.User)
+			c.Set("device", claims.Device)
+
+			// Set request context
+			ctx := context.WithValue(c.Request().Context(), "user", claims.User)
+			ctx = context.WithValue(ctx, "device", claims.Device)
+
+			c.SetRequest(c.Request().WithContext(ctx))
+		},
+	})
+
+	groupPermission := s.e.Group("/api/v1/permissions", jwtAuthMiddleware)
 	groupPermission.POST("/", s.permissionHandler.Store())
 	groupPermission.PUT("/:uuid", s.permissionHandler.Update())
 	groupPermission.DELETE("/:uuid", s.permissionHandler.Delete())
 	groupPermission.GET("/:uuid", s.permissionHandler.GetByUuid())
 	groupPermission.GET("/", s.permissionHandler.GetAll())
 
-	groupRole := s.e.Group("/api/v1/roles")
+	groupRole := s.e.Group("/api/v1/roles", jwtAuthMiddleware)
 	groupRole.POST("/", s.roleHandler.Store())
 	groupRole.PUT("/:uuid", s.roleHandler.Update())
 	groupRole.DELETE("/:uuid", s.roleHandler.Delete())
 	groupRole.GET("/:uuid", s.roleHandler.GetByUuid())
 	groupRole.GET("/", s.roleHandler.GetAll())
 
-	groupUser := s.e.Group("/api/v1/users")
+	groupUser := s.e.Group("/api/v1/users", jwtAuthMiddleware)
 	groupUser.POST("/", s.userHandler.Store())
 	groupUser.PUT("/:uuid", s.userHandler.Update())
 	groupUser.DELETE("/:uuid", s.userHandler.Delete())
