@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/Adhiana46/echo-boilerplate/dto"
@@ -16,6 +17,7 @@ var (
 
 	ErrInvalidToken     = errors.New("invalid token")
 	ErrBlacklistedToken = errors.New("token blacklisted")
+	ErrTokenExpired     = errors.New("token expired")
 )
 
 // in-memory blacklisted token
@@ -48,6 +50,11 @@ func (r *TokenManager) GenerateToken(claims *dto.UserClaims) (string, error) {
 func (r *TokenManager) ParseToken(tokenStr string) (*jwt.Token, *dto.UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &dto.UserClaims{}, r.secretKeyFn)
 	if err != nil {
+		// check if token is expired
+		if strings.HasPrefix(err.Error(), "token is expired by") {
+			return nil, nil, ErrTokenExpired
+		}
+
 		return nil, nil, err
 	}
 
@@ -104,5 +111,10 @@ func (r *TokenManager) BlacklistToken(tokenStr string) error {
 }
 
 func (r *TokenManager) secretKeyFn(token *jwt.Token) (interface{}, error) {
+	// validate signing algo
+	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+	}
+
 	return []byte(r.secretKey), nil
 }

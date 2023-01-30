@@ -16,7 +16,7 @@ func Authenticate(tokenManager *tokenmanager.TokenManager) echo.MiddlewareFunc {
 	return echojwt.WithConfig(echojwt.Config{
 		ErrorHandler: func(c echo.Context, err error) error {
 			if err != nil {
-				return errors.NewUnauthorizedError("Unauthorized")
+				return errors.NewUnauthorizedError(err.Error())
 			}
 
 			return nil
