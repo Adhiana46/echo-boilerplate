@@ -50,7 +50,7 @@ func main() {
 		defer cache.Close()
 	}
 
-	tokenManager = tokenmanager.NewTokenManager(cfg.JWT.SecretKey, cache)
+	tokenManager = tokenmanager.NewTokenManager(&cfg.JWT, cache)
 
 	// TODO: documentstore
 

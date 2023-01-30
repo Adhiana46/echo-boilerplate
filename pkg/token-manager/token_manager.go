@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Adhiana46/echo-boilerplate/config"
 	"github.com/Adhiana46/echo-boilerplate/dto"
 	"github.com/Adhiana46/echo-boilerplate/pkg/cache"
 	"github.com/golang-jwt/jwt/v4"
@@ -18,6 +19,7 @@ var (
 	ErrInvalidToken     = errors.New("invalid token")
 	ErrBlacklistedToken = errors.New("token blacklisted")
 	ErrTokenExpired     = errors.New("token expired")
+	ErrIncorrectIssuer  = errors.New("incorrect issuer")
 )
 
 // in-memory blacklisted token
@@ -26,16 +28,19 @@ var blacklistedTokens map[string]string = map[string]string{}
 type TokenManager struct {
 	cache     cache.Cache
 	secretKey string
+	issuer    string
 }
 
-func NewTokenManager(secretKey string, cache cache.Cache) *TokenManager {
+func NewTokenManager(jwtCfg *config.JWTConfig, cache cache.Cache) *TokenManager {
 	return &TokenManager{
 		cache:     cache,
-		secretKey: secretKey,
+		secretKey: jwtCfg.SecretKey,
+		issuer:    jwtCfg.SecretKey,
 	}
 }
 
 func (r *TokenManager) GenerateToken(claims *dto.UserClaims) (string, error) {
+	claims.Issuer = r.issuer
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 
 	tokenStr, err := token.SignedString([]byte(r.secretKey))
@@ -85,6 +90,10 @@ func (r *TokenManager) ParseToken(tokenStr string) (*jwt.Token, *dto.UserClaims,
 	if !ok {
 		log.Println("NOT OK")
 		return nil, nil, ErrInvalidToken
+	}
+
+	if claims.Issuer != r.issuer {
+		return nil, nil, ErrIncorrectIssuer
 	}
 
 	return token, claims, nil

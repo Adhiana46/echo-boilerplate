@@ -66,6 +66,7 @@ type FirebaseConfig struct {
 
 type JWTConfig struct {
 	SecretKey string `env:"JWT_SECRET" yaml:"secret"`
+	Issuer    string `env:"JWT_ISSUER" yaml:"issuer"`
 }
 
 func LoadConfig() (*Config, error) {

@@ -5,6 +5,7 @@ app:
 
 jwt:
   secret: "secret"
+  issuer: "example.com"
 
 http:
   host: '0.0.0.0'
