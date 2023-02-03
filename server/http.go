@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -151,6 +152,10 @@ func NewServer(cfg *config.Config, db *sqlx.DB, cache cachePkg.Cache, tokenManag
 func (s *Server) Run() error {
 	log.Println("[Server]:", fmt.Sprintf("Running server on %s:%s", s.cfg.Http.Host, s.cfg.Http.Port))
 	return s.e.Start(fmt.Sprintf("%s:%s", s.cfg.Http.Host, s.cfg.Http.Port))
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.e.Shutdown(ctx)
 }
 
 func (s *Server) setupRepo() {

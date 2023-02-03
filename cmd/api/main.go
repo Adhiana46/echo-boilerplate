@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/Adhiana46/echo-boilerplate/config"
@@ -100,8 +103,19 @@ func run() {
 		// run server
 		srv := server.NewServer(cfg, db, cache, tokenManager)
 
-		if err := srv.Run(); err != nil {
-			log.Panic("[Error][Server]", err)
+		go func() {
+			if err := srv.Run(); err != nil {
+				log.Fatal("shutting down the server ", err)
+			}
+		}()
+
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		<-quit
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Fatal(err)
 		}
 	}
 
