@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/Adhiana46/echo-boilerplate/config"
 	"github.com/Adhiana46/echo-boilerplate/internal/permission"
@@ -25,6 +26,7 @@ import (
 	userUsecase "github.com/Adhiana46/echo-boilerplate/internal/user/usecase"
 	cachePkg "github.com/Adhiana46/echo-boilerplate/pkg/cache"
 	"github.com/Adhiana46/echo-boilerplate/pkg/errors"
+	"github.com/Adhiana46/echo-boilerplate/pkg/logger"
 	m "github.com/Adhiana46/echo-boilerplate/pkg/middlewares"
 	tokenmanager "github.com/Adhiana46/echo-boilerplate/pkg/token-manager"
 	"github.com/Adhiana46/echo-boilerplate/pkg/utils"
@@ -118,16 +120,30 @@ func NewServer(cfg *config.Config, db *sqlx.DB, cache cachePkg.Cache, tokenManag
 
 		resp := utils.JsonError(statusCode, message, errorsData, stackTraces)
 
-		c.Logger().Error(err)
+		logger.WithFields(logger.Fields{
+			"at":     time.Now().Format("2006-01-02 15:04:05"),
+			"method": c.Request().Method,
+			"uri":    c.Request().URL.String(),
+			"ip":     c.Request().RemoteAddr,
+		}).Error(err)
 		c.JSON(statusCode, resp)
 	}
 
 	e.Pre(middleware.AddTrailingSlash())
 
 	// Middlewares
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "method=${method}, uri=${uri}, status=${status}\n",
-	}))
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			logger.WithFields(logger.Fields{
+				"at":     time.Now().Format("2006-01-02 15:04:05"),
+				"method": c.Request().Method,
+				"uri":    c.Request().URL.String(),
+				"ip":     c.Request().RemoteAddr,
+			}).Info("incoming request")
+
+			return next(c)
+		}
+	})
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")

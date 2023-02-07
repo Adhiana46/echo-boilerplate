@@ -4,14 +4,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/Adhiana46/echo-boilerplate/config"
 	cachePkg "github.com/Adhiana46/echo-boilerplate/pkg/cache"
+	"github.com/Adhiana46/echo-boilerplate/pkg/logger"
 	tokenmanager "github.com/Adhiana46/echo-boilerplate/pkg/token-manager"
 	"github.com/Adhiana46/echo-boilerplate/server"
 	_ "github.com/jackc/pgx/stdlib"
@@ -33,20 +34,22 @@ func main() {
 
 	cfg, err = config.LoadConfig()
 	if err != nil {
-		log.Panic("[Error][Config]", err)
+		logger.Panic("[Error][Config]", err)
 	}
-	log.Println("[Boot]:", "Config loaded")
+	initLogger(&cfg.Log)
+
+	logger.Println("[Boot]:", "Config loaded")
 
 	db, err = openDb(cfg.Pg)
 	if err != nil {
-		log.Panic("[Error][DB]:", err)
+		logger.Panic("[Error][DB]:", err)
 	}
 	defer db.Close()
 
 	// cache
 	cache, err = openCache(cfg)
 	if err != nil {
-		log.Panic("[Error][Cache]:", err)
+		logger.Panic("[Error][Cache]:", err)
 	}
 
 	if cache != nil {
@@ -105,7 +108,7 @@ func run() {
 
 		go func() {
 			if err := srv.Run(); err != nil {
-				log.Fatal("shutting down the server ", err)
+				logger.Fatal("shutting down the server ", err)
 			}
 		}()
 
@@ -115,11 +118,27 @@ func run() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 	}
 
 	os.Exit(0)
+}
+
+func initLogger(cfg *config.LogConfig) {
+	dir := strings.TrimRight(cfg.Path, "/")
+
+	logDriver, err := logger.NewLogrusLogger(logger.Config{
+		Level:           cfg.Level,
+		TimestampFormat: "2006-01-02 15:04:05",
+		FileLocation:    dir,
+	})
+
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	logger.SetLogger(logDriver)
 }
 
 func openDb(cfg config.PgConfig) (*sqlx.DB, error) {
@@ -143,7 +162,7 @@ func openDb(cfg config.PgConfig) (*sqlx.DB, error) {
 	if err = dbConn.Ping(); err != nil {
 		return nil, err
 	} else {
-		log.Println("[Boot]:", "Database connected successfully!")
+		logger.Println("[Boot]:", "Database connected successfully!")
 	}
 
 	return dbConn, nil

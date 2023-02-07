@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	App       AppConfig       `yaml:"app"`
+	Log       LogConfig       `yaml:"log"`
 	JWT       JWTConfig       `yaml:"jwt"`
 	Http      HttpConfig      `yaml:"http"`
 	Pg        PgConfig        `yaml:"postgres"`
@@ -22,6 +23,11 @@ type AppConfig struct {
 	Name    string `env-required:"true" env:"APP_NAME" yaml:"name"`
 	Version string `env-required:"true" env:"APP_VERSION" yaml:"version"`
 	Debug   bool   `env:"APP_DEBUG" yaml:"debug" env-default:"false"`
+}
+
+type LogConfig struct {
+	Path  string `env-required:"true" env:"LOG_PATH" yaml:"path"`
+	Level string `env-required:"true" env:"LOG_LEVEL" yaml:"level"`
 }
 
 type HttpConfig struct {

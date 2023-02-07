@@ -1,2 +1,4 @@
 .env
 config.local.yaml
+
+logs/

@@ -3,6 +3,10 @@ app:
   version: '1.0.0'
   debug: true
 
+log:
+  path: "/var/logs/echo-boilerplate/"
+  level: "debug" # panic|fatal|error|warn|info|debug|trace
+
 jwt:
   secret: "secret"
   issuer: "example.com"
