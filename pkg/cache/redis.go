@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis/v9"
+	"github.com/redis/go-redis/v9"
 )
 
 type redisCache struct {
@@ -35,14 +35,26 @@ func (c *redisCache) Get(key string) (string, error) {
 	ctx := context.Background()
 
 	result, err := c.rdb.Get(ctx, key).Result()
-	if err != nil {
-		if err == redis.Nil {
-			return "", ErrCacheNil
-		}
-		return "", err
+	if err == nil {
+		return result, nil
 	}
 
-	return result, nil
+	if err == redis.Nil {
+		return "", ErrCacheNil
+	}
+
+	return "", err
+}
+
+func (c *redisCache) Delete(key string) error {
+	ctx := context.Background()
+
+	err := c.rdb.Del(ctx, key).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *redisCache) Close() error {

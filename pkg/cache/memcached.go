@@ -29,14 +29,23 @@ func (c *mcCache) Set(key string, value string, expSecond int32) error {
 
 func (c *mcCache) Get(key string) (string, error) {
 	item, err := c.mc.Get(key)
-	if err != nil {
-		if err == memcache.ErrCacheMiss {
-			return "", ErrCacheNil
-		}
-		return "", err
+	if err == nil {
+		return string(item.Value), nil
 	}
 
-	return string(item.Value), nil
+	if err == memcache.ErrCacheMiss {
+		return "", ErrCacheNil
+	}
+	return "", err
+}
+
+func (c *mcCache) Delete(key string) error {
+	err := c.mc.Delete(key)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *mcCache) Close() error {
