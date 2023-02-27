@@ -1,4 +1,4 @@
-package repository
+package data
 
 import (
 	"context"
@@ -11,17 +11,17 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type pgPermissionRepository struct {
+type postgresPermissionPersistent struct {
 	db *sqlx.DB
 }
 
-func NewPgPermissionRepository(db *sqlx.DB) permission.PermissionRepository {
-	return &pgPermissionRepository{
+func NewPostgresPermissionPersistent(db *sqlx.DB) permission.PermissionPersistent {
+	return &postgresPermissionPersistent{
 		db: db,
 	}
 }
 
-func (r *pgPermissionRepository) Create(ctx context.Context, e *entity.Permission) (*entity.Permission, error) {
+func (r *postgresPermissionPersistent) Create(ctx context.Context, e *entity.Permission) (*entity.Permission, error) {
 	sql := `
 		INSERT INTO permissions
 		(uuid, parent_id, name, type, created_at, created_by, updated_at, updated_by)
@@ -51,7 +51,7 @@ func (r *pgPermissionRepository) Create(ctx context.Context, e *entity.Permissio
 	return r.FindById(ctx, insertedId)
 }
 
-func (r *pgPermissionRepository) Update(ctx context.Context, e *entity.Permission) (*entity.Permission, error) {
+func (r *postgresPermissionPersistent) Update(ctx context.Context, e *entity.Permission) (*entity.Permission, error) {
 	sql := `
 		UPDATE permissions
 		SET parent_id = $1, 
@@ -81,7 +81,7 @@ func (r *pgPermissionRepository) Update(ctx context.Context, e *entity.Permissio
 	return r.FindByUuid(ctx, e.Uuid)
 }
 
-func (r *pgPermissionRepository) Destroy(ctx context.Context, e *entity.Permission) error {
+func (r *postgresPermissionPersistent) Destroy(ctx context.Context, e *entity.Permission) error {
 	sql := `DELETE FROM permissions WHERE id = $1`
 
 	_, err := r.db.ExecContext(ctx, sql, e.Id)
@@ -89,7 +89,7 @@ func (r *pgPermissionRepository) Destroy(ctx context.Context, e *entity.Permissi
 	return err
 }
 
-func (r *pgPermissionRepository) FindById(ctx context.Context, id int) (*entity.Permission, error) {
+func (r *postgresPermissionPersistent) FindById(ctx context.Context, id int) (*entity.Permission, error) {
 	sql := `
 		SELECT id, uuid, parent_id, name, type, created_at, created_by, updated_at, updated_by
 		FROM permissions
@@ -105,7 +105,7 @@ func (r *pgPermissionRepository) FindById(ctx context.Context, id int) (*entity.
 	return e, nil
 }
 
-func (r *pgPermissionRepository) FindByUuid(ctx context.Context, uuid string) (*entity.Permission, error) {
+func (r *postgresPermissionPersistent) FindByUuid(ctx context.Context, uuid string) (*entity.Permission, error) {
 	sql := `
 		SELECT id, uuid, parent_id, name, type, created_at, created_by, updated_at, updated_by
 		FROM permissions
@@ -121,7 +121,7 @@ func (r *pgPermissionRepository) FindByUuid(ctx context.Context, uuid string) (*
 	return e, nil
 }
 
-func (r *pgPermissionRepository) FindAll(ctx context.Context, offset int, limit int, sorts map[string]string, search string) ([]*entity.Permission, error) {
+func (r *postgresPermissionPersistent) FindAll(ctx context.Context, offset int, limit int, sorts map[string]string, search string) ([]*entity.Permission, error) {
 	sql := `
 		SELECT id, uuid, parent_id, name, type, created_at, created_by, updated_at, updated_by
 		FROM permissions
@@ -163,7 +163,7 @@ func (r *pgPermissionRepository) FindAll(ctx context.Context, offset int, limit 
 	return rows, nil
 }
 
-func (r *pgPermissionRepository) FindAllByNames(ctx context.Context, names []string) ([]*entity.Permission, error) {
+func (r *postgresPermissionPersistent) FindAllByNames(ctx context.Context, names []string) ([]*entity.Permission, error) {
 	sql, args, err := sqlx.In(`
 		SELECT id, uuid, parent_id, name, type, created_at, created_by, updated_at, updated_by
 		FROM permissions
@@ -185,7 +185,7 @@ func (r *pgPermissionRepository) FindAllByNames(ctx context.Context, names []str
 	return rows, nil
 }
 
-func (r *pgPermissionRepository) CountByName(ctx context.Context, name string) (int, error) {
+func (r *postgresPermissionPersistent) CountByName(ctx context.Context, name string) (int, error) {
 	sql := `
 		SELECT COUNT(id) AS numrows
 		FROM permissions
@@ -201,7 +201,7 @@ func (r *pgPermissionRepository) CountByName(ctx context.Context, name string) (
 	return numrows, nil
 }
 
-func (r *pgPermissionRepository) CountAll(ctx context.Context, search string) (int, error) {
+func (r *postgresPermissionPersistent) CountAll(ctx context.Context, search string) (int, error) {
 	sql := `
 		SELECT COUNT(id) AS numrows
 		FROM permissions

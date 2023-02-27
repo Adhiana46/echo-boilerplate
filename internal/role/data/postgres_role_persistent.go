@@ -1,4 +1,4 @@
-package repository
+package data
 
 import (
 	"context"
@@ -13,17 +13,17 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type pgRoleRepository struct {
+type postgresRolePersistent struct {
 	db *sqlx.DB
 }
 
-func NewPgRoleRepository(db *sqlx.DB) role.RoleRepository {
-	return &pgRoleRepository{
+func NewPostgresRolePersistent(db *sqlx.DB) role.RolePersistent {
+	return &postgresRolePersistent{
 		db: db,
 	}
 }
 
-func (r *pgRoleRepository) Create(ctx context.Context, e *entity.Role) (*entity.Role, error) {
+func (r *postgresRolePersistent) Create(ctx context.Context, e *entity.Role) (*entity.Role, error) {
 	// set squirrel
 	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
@@ -80,7 +80,7 @@ func (r *pgRoleRepository) Create(ctx context.Context, e *entity.Role) (*entity.
 	return r.FindById(ctx, roleId)
 }
 
-func (r *pgRoleRepository) Update(ctx context.Context, e *entity.Role) (*entity.Role, error) {
+func (r *postgresRolePersistent) Update(ctx context.Context, e *entity.Role) (*entity.Role, error) {
 	// set squirrel
 	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
@@ -137,7 +137,7 @@ func (r *pgRoleRepository) Update(ctx context.Context, e *entity.Role) (*entity.
 	return r.FindById(ctx, e.Id)
 }
 
-func (r *pgRoleRepository) Destroy(ctx context.Context, e *entity.Role) error {
+func (r *postgresRolePersistent) Destroy(ctx context.Context, e *entity.Role) error {
 	sql := `DELETE FROM roles WHERE id = $1`
 
 	_, err := r.db.ExecContext(ctx, sql, e.Id)
@@ -145,7 +145,7 @@ func (r *pgRoleRepository) Destroy(ctx context.Context, e *entity.Role) error {
 	return err
 }
 
-func (r *pgRoleRepository) FindById(ctx context.Context, id int) (*entity.Role, error) {
+func (r *postgresRolePersistent) FindById(ctx context.Context, id int) (*entity.Role, error) {
 	sql := `
 		SELECT id, uuid, name, created_at, created_by, updated_at, updated_by
 		FROM roles
@@ -174,7 +174,7 @@ func (r *pgRoleRepository) FindById(ctx context.Context, id int) (*entity.Role, 
 	return e, nil
 }
 
-func (r *pgRoleRepository) FindByUuid(ctx context.Context, uuid string) (*entity.Role, error) {
+func (r *postgresRolePersistent) FindByUuid(ctx context.Context, uuid string) (*entity.Role, error) {
 	sql := `
 		SELECT id, uuid, name, created_at, created_by, updated_at, updated_by
 		FROM roles
@@ -203,7 +203,7 @@ func (r *pgRoleRepository) FindByUuid(ctx context.Context, uuid string) (*entity
 	return e, nil
 }
 
-func (r *pgRoleRepository) FindByName(ctx context.Context, name string) (*entity.Role, error) {
+func (r *postgresRolePersistent) FindByName(ctx context.Context, name string) (*entity.Role, error) {
 	sql := `
 		SELECT id, uuid, name, created_at, created_by, updated_at, updated_by
 		FROM roles
@@ -232,7 +232,7 @@ func (r *pgRoleRepository) FindByName(ctx context.Context, name string) (*entity
 	return e, nil
 }
 
-func (r *pgRoleRepository) FindAll(ctx context.Context, offset int, limit int, sorts map[string]string, search string) ([]*entity.Role, error) {
+func (r *postgresRolePersistent) FindAll(ctx context.Context, offset int, limit int, sorts map[string]string, search string) ([]*entity.Role, error) {
 	sql := `
 		SELECT id, uuid, name, created_at, created_by, updated_at, updated_by
 		FROM roles
@@ -274,7 +274,7 @@ func (r *pgRoleRepository) FindAll(ctx context.Context, offset int, limit int, s
 	return rows, nil
 }
 
-func (r *pgRoleRepository) CountByName(ctx context.Context, name string) (int, error) {
+func (r *postgresRolePersistent) CountByName(ctx context.Context, name string) (int, error) {
 	sql := `
 		SELECT COUNT(id) AS numrows
 		FROM roles
@@ -290,7 +290,7 @@ func (r *pgRoleRepository) CountByName(ctx context.Context, name string) (int, e
 	return numrows, nil
 }
 
-func (r *pgRoleRepository) CountAll(ctx context.Context, search string) (int, error) {
+func (r *postgresRolePersistent) CountAll(ctx context.Context, search string) (int, error) {
 	sql := `
 		SELECT COUNT(id) AS numrows
 		FROM roles

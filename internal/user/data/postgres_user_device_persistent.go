@@ -1,4 +1,4 @@
-package repository
+package data
 
 import (
 	"context"
@@ -8,17 +8,17 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type pgUserDeviceRepository struct {
+type pgUserDevicePersistent struct {
 	db *sqlx.DB
 }
 
-func NewPgUserDeviceRepository(db *sqlx.DB) user.UserDeviceRepository {
-	return &pgUserDeviceRepository{
+func NewPostgresUserDevicePersistent(db *sqlx.DB) user.UserDevicePersistent {
+	return &pgUserDevicePersistent{
 		db: db,
 	}
 }
 
-func (r *pgUserDeviceRepository) Create(ctx context.Context, e *entity.UserDevice) (*entity.UserDevice, error) {
+func (r *pgUserDevicePersistent) Create(ctx context.Context, e *entity.UserDevice) (*entity.UserDevice, error) {
 	sql := `
 		INSERT INTO user_devices
 		(uuid, user_id, token, ip, location, platform, user_agent, app_version, vendor, created_at, created_by, updated_at, updated_by)
@@ -52,7 +52,7 @@ func (r *pgUserDeviceRepository) Create(ctx context.Context, e *entity.UserDevic
 	return r.FindById(ctx, insertId)
 }
 
-func (r *pgUserDeviceRepository) Update(ctx context.Context, e *entity.UserDevice) (*entity.UserDevice, error) {
+func (r *pgUserDevicePersistent) Update(ctx context.Context, e *entity.UserDevice) (*entity.UserDevice, error) {
 	sql := `
 		UPDATE user_devices
 			SET user_id = $1,
@@ -90,7 +90,7 @@ func (r *pgUserDeviceRepository) Update(ctx context.Context, e *entity.UserDevic
 	return r.FindById(ctx, e.Id)
 }
 
-func (r *pgUserDeviceRepository) Destroy(ctx context.Context, e *entity.UserDevice) error {
+func (r *pgUserDevicePersistent) Destroy(ctx context.Context, e *entity.UserDevice) error {
 	sql := `DELETE FROM user_devices WHERE id = $1`
 
 	_, err := r.db.ExecContext(ctx, sql, e.Id)
@@ -98,7 +98,7 @@ func (r *pgUserDeviceRepository) Destroy(ctx context.Context, e *entity.UserDevi
 	return err
 }
 
-func (r *pgUserDeviceRepository) FindById(ctx context.Context, id int) (*entity.UserDevice, error) {
+func (r *pgUserDevicePersistent) FindById(ctx context.Context, id int) (*entity.UserDevice, error) {
 	sql := `
 		SELECT id, uuid, user_id, token, ip, location, platform, user_agent, app_version, vendor, created_at, created_by, updated_at, updated_by
 		FROM user_devices
@@ -114,7 +114,7 @@ func (r *pgUserDeviceRepository) FindById(ctx context.Context, id int) (*entity.
 	return row, nil
 }
 
-func (r *pgUserDeviceRepository) FindByUuid(ctx context.Context, uuid string) (*entity.UserDevice, error) {
+func (r *pgUserDevicePersistent) FindByUuid(ctx context.Context, uuid string) (*entity.UserDevice, error) {
 	sql := `
 		SELECT id, uuid, user_id, token, ip, location, platform, user_agent, app_version, vendor, created_at, created_by, updated_at, updated_by
 		FROM user_devices
@@ -130,7 +130,7 @@ func (r *pgUserDeviceRepository) FindByUuid(ctx context.Context, uuid string) (*
 	return row, nil
 }
 
-func (r *pgUserDeviceRepository) FindByToken(ctx context.Context, userId int, token string) (*entity.UserDevice, error) {
+func (r *pgUserDevicePersistent) FindByToken(ctx context.Context, userId int, token string) (*entity.UserDevice, error) {
 	sql := `
 		SELECT id, uuid, user_id, token, ip, location, platform, user_agent, app_version, vendor, created_at, created_by, updated_at, updated_by
 		FROM user_devices

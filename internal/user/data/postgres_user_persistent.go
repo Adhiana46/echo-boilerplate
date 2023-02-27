@@ -1,4 +1,4 @@
-package repository
+package data
 
 import (
 	"context"
@@ -6,25 +6,22 @@ import (
 	"strings"
 
 	"github.com/Adhiana46/echo-boilerplate/entity"
-	"github.com/Adhiana46/echo-boilerplate/internal/role"
 	"github.com/Adhiana46/echo-boilerplate/internal/user"
 	"github.com/Adhiana46/echo-boilerplate/pkg/errors"
 	"github.com/jmoiron/sqlx"
 )
 
-type pgUserRepository struct {
-	db       *sqlx.DB
-	roleRepo role.RoleRepository
+type pgUserPersistent struct {
+	db *sqlx.DB
 }
 
-func NewPgUserRepository(db *sqlx.DB, roleRepo role.RoleRepository) user.UserRepository {
-	return &pgUserRepository{
-		db:       db,
-		roleRepo: roleRepo,
+func NewPostgresUserPersistent(db *sqlx.DB) user.UserPersistent {
+	return &pgUserPersistent{
+		db: db,
 	}
 }
 
-func (r *pgUserRepository) Create(ctx context.Context, e *entity.User) (*entity.User, error) {
+func (r *pgUserPersistent) Create(ctx context.Context, e *entity.User) (*entity.User, error) {
 	sql := `
 		INSERT INTO users
 		(uuid, username, email, password, name, role_id, status, last_login_at, created_at, created_by, updated_at, updated_by)
@@ -57,7 +54,7 @@ func (r *pgUserRepository) Create(ctx context.Context, e *entity.User) (*entity.
 	return r.FindById(ctx, insertId)
 }
 
-func (r *pgUserRepository) Update(ctx context.Context, e *entity.User) (*entity.User, error) {
+func (r *pgUserPersistent) Update(ctx context.Context, e *entity.User) (*entity.User, error) {
 	sql := `
 		UPDATE users
 			SET username = $1, 
@@ -93,7 +90,7 @@ func (r *pgUserRepository) Update(ctx context.Context, e *entity.User) (*entity.
 	return r.FindById(ctx, e.Id)
 }
 
-func (r *pgUserRepository) Destroy(ctx context.Context, e *entity.User) error {
+func (r *pgUserPersistent) Destroy(ctx context.Context, e *entity.User) error {
 	sql := `DELETE FROM users WHERE id = $1`
 
 	_, err := r.db.ExecContext(ctx, sql, e.Id)
@@ -101,7 +98,7 @@ func (r *pgUserRepository) Destroy(ctx context.Context, e *entity.User) error {
 	return err
 }
 
-func (r *pgUserRepository) FindById(ctx context.Context, id int) (*entity.User, error) {
+func (r *pgUserPersistent) FindById(ctx context.Context, id int) (*entity.User, error) {
 	sql := `
 		SELECT id, uuid, username, email, password, name, role_id, status, last_login_at, created_at, created_by, updated_at, updated_by
 		FROM users
@@ -114,17 +111,10 @@ func (r *pgUserRepository) FindById(ctx context.Context, id int) (*entity.User, 
 		return nil, err
 	}
 
-	role, err := r.roleRepo.FindById(ctx, row.RoleId)
-	if err != nil {
-		return nil, err
-	}
-
-	row.Role = role
-
 	return row, nil
 }
 
-func (r *pgUserRepository) FindByUuid(ctx context.Context, uuid string) (*entity.User, error) {
+func (r *pgUserPersistent) FindByUuid(ctx context.Context, uuid string) (*entity.User, error) {
 	sql := `
 		SELECT id, uuid, username, email, password, name, role_id, status, last_login_at, created_at, created_by, updated_at, updated_by
 		FROM users
@@ -137,17 +127,10 @@ func (r *pgUserRepository) FindByUuid(ctx context.Context, uuid string) (*entity
 		return nil, err
 	}
 
-	role, err := r.roleRepo.FindById(ctx, row.RoleId)
-	if err != nil {
-		return nil, err
-	}
-
-	row.Role = role
-
 	return row, nil
 }
 
-func (r *pgUserRepository) FindByUsernameOrEmail(ctx context.Context, username string) (*entity.User, error) {
+func (r *pgUserPersistent) FindByUsernameOrEmail(ctx context.Context, username string) (*entity.User, error) {
 	sql := `
 		SELECT id, uuid, username, email, password, name, role_id, status, last_login_at, created_at, created_by, updated_at, updated_by
 		FROM users
@@ -160,17 +143,10 @@ func (r *pgUserRepository) FindByUsernameOrEmail(ctx context.Context, username s
 		return nil, err
 	}
 
-	role, err := r.roleRepo.FindById(ctx, row.RoleId)
-	if err != nil {
-		return nil, err
-	}
-
-	row.Role = role
-
 	return row, nil
 }
 
-func (r *pgUserRepository) FindAll(ctx context.Context, offset int, limit int, sorts map[string]string, search string) ([]*entity.User, error) {
+func (r *pgUserPersistent) FindAll(ctx context.Context, offset int, limit int, sorts map[string]string, search string) ([]*entity.User, error) {
 	sql := `
 		SELECT id, uuid, username, email, password, name, role_id, status, last_login_at, created_at, created_by, updated_at, updated_by
 		FROM users
@@ -214,7 +190,7 @@ func (r *pgUserRepository) FindAll(ctx context.Context, offset int, limit int, s
 	return rows, nil
 }
 
-func (r *pgUserRepository) CountByUsername(ctx context.Context, username string) (int, error) {
+func (r *pgUserPersistent) CountByUsername(ctx context.Context, username string) (int, error) {
 	sql := `
 		SELECT COUNT(id) AS numrows
 		FROM users
@@ -230,7 +206,7 @@ func (r *pgUserRepository) CountByUsername(ctx context.Context, username string)
 	return numrows, nil
 }
 
-func (r *pgUserRepository) CountByEmail(ctx context.Context, email string) (int, error) {
+func (r *pgUserPersistent) CountByEmail(ctx context.Context, email string) (int, error) {
 	sql := `
 		SELECT COUNT(id) AS numrows
 		FROM users
@@ -246,7 +222,7 @@ func (r *pgUserRepository) CountByEmail(ctx context.Context, email string) (int,
 	return numrows, nil
 }
 
-func (r *pgUserRepository) CountAll(ctx context.Context, search string) (int, error) {
+func (r *pgUserPersistent) CountAll(ctx context.Context, search string) (int, error) {
 	sql := `
 		SELECT COUNT(id) AS numrows
 		FROM users

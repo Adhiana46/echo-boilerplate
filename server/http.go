@@ -13,14 +13,17 @@ import (
 
 	"github.com/Adhiana46/echo-boilerplate/config"
 	"github.com/Adhiana46/echo-boilerplate/internal/permission"
+	permissionData "github.com/Adhiana46/echo-boilerplate/internal/permission/data"
 	permissionHttpHandler "github.com/Adhiana46/echo-boilerplate/internal/permission/delivery/http"
 	permissionRepo "github.com/Adhiana46/echo-boilerplate/internal/permission/repository"
 	permissionUsecase "github.com/Adhiana46/echo-boilerplate/internal/permission/usecase"
 	"github.com/Adhiana46/echo-boilerplate/internal/role"
+	roleData "github.com/Adhiana46/echo-boilerplate/internal/role/data"
 	roleHttpHandler "github.com/Adhiana46/echo-boilerplate/internal/role/delivery/http"
 	roleRepo "github.com/Adhiana46/echo-boilerplate/internal/role/repository"
 	roleUsecase "github.com/Adhiana46/echo-boilerplate/internal/role/usecase"
 	"github.com/Adhiana46/echo-boilerplate/internal/user"
+	userData "github.com/Adhiana46/echo-boilerplate/internal/user/data"
 	userHttpHandler "github.com/Adhiana46/echo-boilerplate/internal/user/delivery/http"
 	userRepo "github.com/Adhiana46/echo-boilerplate/internal/user/repository"
 	userUsecase "github.com/Adhiana46/echo-boilerplate/internal/user/usecase"
@@ -43,6 +46,12 @@ type Server struct {
 	db           *sqlx.DB
 	cache        cachePkg.Cache
 	tokenManager *tokenmanager.TokenManager
+
+	// Persistent Postgres
+	persistPermission permission.PermissionPersistent
+	persistRole       role.RolePersistent
+	persistUser       user.UserPersistent
+	persistUserDevice user.UserDevicePersistent
 
 	// repositories
 	repoPermission permission.PermissionRepository
@@ -157,6 +166,7 @@ func NewServer(cfg *config.Config, db *sqlx.DB, cache cachePkg.Cache, tokenManag
 		tokenManager: tokenManager,
 	}
 
+	srv.setupDataSource()
 	srv.setupRepo()
 	srv.setupUsecase()
 	srv.setupHttpHandler()
@@ -174,11 +184,18 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.e.Shutdown(ctx)
 }
 
+func (s *Server) setupDataSource() {
+	s.persistPermission = permissionData.NewPostgresPermissionPersistent(s.db)
+	s.persistRole = roleData.NewPostgresRolePersistent(s.db)
+	s.persistUser = userData.NewPostgresUserPersistent(s.db)
+	s.persistUserDevice = userData.NewPostgresUserDevicePersistent(s.db)
+}
+
 func (s *Server) setupRepo() {
-	s.repoPermission = permissionRepo.NewPgPermissionRepository(s.db)
-	s.repoRole = roleRepo.NewPgRoleRepository(s.db)
-	s.repoUser = userRepo.NewPgUserRepository(s.db, s.repoRole)
-	s.repoUserDevice = userRepo.NewPgUserDeviceRepository(s.db)
+	s.repoPermission = permissionRepo.NewPermissionRepository(s.persistPermission)
+	s.repoRole = roleRepo.NewRoleRepository(s.persistRole)
+	s.repoUser = userRepo.NewUserRepository(s.persistUser, s.persistRole)
+	s.repoUserDevice = userRepo.NewUserDeviceRepository(s.persistUserDevice)
 }
 
 func (s *Server) setupUsecase() {
