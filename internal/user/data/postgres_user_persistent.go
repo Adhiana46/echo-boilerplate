@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/Adhiana46/echo-boilerplate/entity"
 	"github.com/Adhiana46/echo-boilerplate/internal/user"
@@ -11,14 +12,23 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var (
+	postgresUserPersistInstance     *pgUserPersistent
+	postgresUserPersistInstanceOnce sync.Once
+)
+
 type pgUserPersistent struct {
 	db *sqlx.DB
 }
 
 func NewPostgresUserPersistent(db *sqlx.DB) user.UserPersistent {
-	return &pgUserPersistent{
-		db: db,
-	}
+	postgresUserPersistInstanceOnce.Do(func() {
+		postgresUserPersistInstance = &pgUserPersistent{
+			db: db,
+		}
+	})
+
+	return postgresUserPersistInstance
 }
 
 func (r *pgUserPersistent) Create(ctx context.Context, e *entity.User) (*entity.User, error) {

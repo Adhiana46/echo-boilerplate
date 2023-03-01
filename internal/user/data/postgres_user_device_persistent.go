@@ -2,10 +2,16 @@ package data
 
 import (
 	"context"
+	"sync"
 
 	"github.com/Adhiana46/echo-boilerplate/entity"
 	"github.com/Adhiana46/echo-boilerplate/internal/user"
 	"github.com/jmoiron/sqlx"
+)
+
+var (
+	postgresUserDevicePersistInstance     *pgUserDevicePersistent
+	postgresUserDevicePersistInstanceOnce sync.Once
 )
 
 type pgUserDevicePersistent struct {
@@ -13,9 +19,13 @@ type pgUserDevicePersistent struct {
 }
 
 func NewPostgresUserDevicePersistent(db *sqlx.DB) user.UserDevicePersistent {
-	return &pgUserDevicePersistent{
-		db: db,
-	}
+	postgresUserDevicePersistInstanceOnce.Do(func() {
+		postgresUserDevicePersistInstance = &pgUserDevicePersistent{
+			db: db,
+		}
+	})
+
+	return postgresUserDevicePersistInstance
 }
 
 func (r *pgUserDevicePersistent) Create(ctx context.Context, e *entity.UserDevice) (*entity.UserDevice, error) {

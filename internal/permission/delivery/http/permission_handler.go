@@ -3,11 +3,17 @@ package http
 import (
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/Adhiana46/echo-boilerplate/dto"
 	"github.com/Adhiana46/echo-boilerplate/internal/permission"
 	"github.com/Adhiana46/echo-boilerplate/pkg/utils"
 	"github.com/labstack/echo/v4"
+)
+
+var (
+	handlerInstance     *handler
+	handlerInstanceOnce sync.Once
 )
 
 type Handler interface {
@@ -23,9 +29,13 @@ type handler struct {
 }
 
 func NewPermissionHttpHandler(uc permission.PermissionUsecase) Handler {
-	return &handler{
-		uc: uc,
-	}
+	handlerInstanceOnce.Do(func() {
+		handlerInstance = &handler{
+			uc: uc,
+		}
+	})
+
+	return handlerInstance
 }
 
 func (h *handler) Store() func(echo.Context) error {

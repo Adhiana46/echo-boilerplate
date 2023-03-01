@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/Adhiana46/echo-boilerplate/entity"
 	"github.com/Adhiana46/echo-boilerplate/internal/permission"
@@ -11,14 +12,23 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var (
+	postgresPersistInstance     *postgresPermissionPersistent
+	postgresPersistInstanceOnce sync.Once
+)
+
 type postgresPermissionPersistent struct {
 	db *sqlx.DB
 }
 
 func NewPostgresPermissionPersistent(db *sqlx.DB) permission.PermissionPersistent {
-	return &postgresPermissionPersistent{
-		db: db,
-	}
+	postgresPersistInstanceOnce.Do(func() {
+		postgresPersistInstance = &postgresPermissionPersistent{
+			db: db,
+		}
+	})
+
+	return postgresPersistInstance
 }
 
 func (r *postgresPermissionPersistent) Create(ctx context.Context, e *entity.Permission) (*entity.Permission, error) {

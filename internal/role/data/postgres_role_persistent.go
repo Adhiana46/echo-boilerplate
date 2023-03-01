@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/Adhiana46/echo-boilerplate/entity"
 	"github.com/Adhiana46/echo-boilerplate/internal/role"
@@ -13,14 +14,23 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var (
+	postgresPersistInstance     *postgresRolePersistent
+	postgresPersistInstanceOnce sync.Once
+)
+
 type postgresRolePersistent struct {
 	db *sqlx.DB
 }
 
 func NewPostgresRolePersistent(db *sqlx.DB) role.RolePersistent {
-	return &postgresRolePersistent{
-		db: db,
-	}
+	postgresPersistInstanceOnce.Do(func() {
+		postgresPersistInstance = &postgresRolePersistent{
+			db: db,
+		}
+	})
+
+	return postgresPersistInstance
 }
 
 func (r *postgresRolePersistent) Create(ctx context.Context, e *entity.Role) (*entity.Role, error) {

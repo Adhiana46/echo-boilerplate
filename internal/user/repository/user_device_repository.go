@@ -2,9 +2,15 @@ package repository
 
 import (
 	"context"
+	"sync"
 
 	"github.com/Adhiana46/echo-boilerplate/entity"
 	"github.com/Adhiana46/echo-boilerplate/internal/user"
+)
+
+var (
+	userDeviceRepoInstance     *userDeviceRepository
+	userDeviceRepoInstanceOnce sync.Once
 )
 
 type userDeviceRepository struct {
@@ -12,9 +18,13 @@ type userDeviceRepository struct {
 }
 
 func NewUserDeviceRepository(persistent user.UserDevicePersistent) user.UserDeviceRepository {
-	return &userDeviceRepository{
-		persistent: persistent,
-	}
+	userDeviceRepoInstanceOnce.Do(func() {
+		userDeviceRepoInstance = &userDeviceRepository{
+			persistent: persistent,
+		}
+	})
+
+	return userDeviceRepoInstance
 }
 
 func (r *userDeviceRepository) Create(ctx context.Context, e *entity.UserDevice) (*entity.UserDevice, error) {

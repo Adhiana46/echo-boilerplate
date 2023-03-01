@@ -2,9 +2,15 @@ package repository
 
 import (
 	"context"
+	"sync"
 
 	"github.com/Adhiana46/echo-boilerplate/entity"
 	"github.com/Adhiana46/echo-boilerplate/internal/role"
+)
+
+var (
+	roleRepoInstance     *roleRepository
+	roleRepoInstanceOnce sync.Once
 )
 
 type roleRepository struct {
@@ -12,9 +18,13 @@ type roleRepository struct {
 }
 
 func NewRoleRepository(persistent role.RolePersistent) role.RoleRepository {
-	return &roleRepository{
-		persistent: persistent,
-	}
+	roleRepoInstanceOnce.Do(func() {
+		roleRepoInstance = &roleRepository{
+			persistent: persistent,
+		}
+	})
+
+	return roleRepoInstance
 }
 
 func (r *roleRepository) Create(ctx context.Context, e *entity.Role) (*entity.Role, error) {

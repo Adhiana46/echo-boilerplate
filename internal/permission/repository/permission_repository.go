@@ -2,9 +2,15 @@ package repository
 
 import (
 	"context"
+	"sync"
 
 	"github.com/Adhiana46/echo-boilerplate/entity"
 	"github.com/Adhiana46/echo-boilerplate/internal/permission"
+)
+
+var (
+	permissionRepoInstance     *permissionRepository
+	permissionRepoInstanceOnce sync.Once
 )
 
 type permissionRepository struct {
@@ -12,9 +18,12 @@ type permissionRepository struct {
 }
 
 func NewPermissionRepository(persistent permission.PermissionPersistent) permission.PermissionRepository {
-	return &permissionRepository{
-		persistent: persistent,
-	}
+	permissionRepoInstanceOnce.Do(func() {
+		permissionRepoInstance = &permissionRepository{
+			persistent: persistent,
+		}
+	})
+	return permissionRepoInstance
 }
 
 func (r *permissionRepository) Create(ctx context.Context, e *entity.Permission) (*entity.Permission, error) {

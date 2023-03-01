@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/Adhiana46/echo-boilerplate/constants"
@@ -17,16 +18,25 @@ import (
 	"github.com/google/uuid"
 )
 
+var (
+	roleUcInstance     *roleUsecase
+	roleUcInstanceOnce sync.Once
+)
+
 type roleUsecase struct {
 	roleRepo role.RoleRepository
 	permRepo permission.PermissionRepository
 }
 
 func NewRoleUsecase(roleRepo role.RoleRepository, permRepo permission.PermissionRepository) role.RoleUsecase {
-	return &roleUsecase{
-		roleRepo: roleRepo,
-		permRepo: permRepo,
-	}
+	roleUcInstanceOnce.Do(func() {
+		roleUcInstance = &roleUsecase{
+			roleRepo: roleRepo,
+			permRepo: permRepo,
+		}
+	})
+
+	return roleUcInstance
 }
 
 func (uc *roleUsecase) CreateRole(ctx context.Context, input *dto.CreateRoleRequest) (*dto.RoleResponse, error) {

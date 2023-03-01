@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/Adhiana46/echo-boilerplate/constants"
@@ -16,14 +17,22 @@ import (
 	"github.com/google/uuid"
 )
 
+var (
+	permissionUcInstance     *permissionUsecase
+	permissionUcInstanceOnce sync.Once
+)
+
 type permissionUsecase struct {
 	repo permission.PermissionRepository
 }
 
 func NewPermissionUsecase(repo permission.PermissionRepository) permission.PermissionUsecase {
-	return &permissionUsecase{
-		repo: repo,
-	}
+	permissionUcInstanceOnce.Do(func() {
+		permissionUcInstance = &permissionUsecase{
+			repo: repo,
+		}
+	})
+	return permissionUcInstance
 }
 
 func (uc *permissionUsecase) CreatePermission(ctx context.Context, input *dto.CreatePermissionRequest) (*dto.PermissionResponse, error) {

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/Adhiana46/echo-boilerplate/constants"
@@ -17,6 +18,11 @@ import (
 	"github.com/Adhiana46/echo-boilerplate/pkg/utils"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+)
+
+var (
+	userUcInstance     *userUsecase
+	userUcInstanceOnce sync.Once
 )
 
 type userUsecase struct {
@@ -32,12 +38,16 @@ func NewUserUsecase(
 	userDeviceRepo user.UserDeviceRepository,
 	tokenManager *tokenmanager.TokenManager,
 ) user.UserUsecase {
-	return &userUsecase{
-		userRepo:       userRepo,
-		roleRepo:       roleRepo,
-		userDeviceRepo: userDeviceRepo,
-		tokenManager:   tokenManager,
-	}
+	userUcInstanceOnce.Do(func() {
+		userUcInstance = &userUsecase{
+			userRepo:       userRepo,
+			roleRepo:       roleRepo,
+			userDeviceRepo: userDeviceRepo,
+			tokenManager:   tokenManager,
+		}
+	})
+
+	return userUcInstance
 }
 
 func (uc *userUsecase) CreateUser(ctx context.Context, input *dto.CreateUserRequest) (*dto.UserResponse, error) {

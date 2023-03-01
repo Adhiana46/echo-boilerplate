@@ -2,10 +2,16 @@ package repository
 
 import (
 	"context"
+	"sync"
 
 	"github.com/Adhiana46/echo-boilerplate/entity"
 	"github.com/Adhiana46/echo-boilerplate/internal/role"
 	"github.com/Adhiana46/echo-boilerplate/internal/user"
+)
+
+var (
+	userRepoInstance     *userRepository
+	userRepoInstanceOnce sync.Once
 )
 
 type userRepository struct {
@@ -14,10 +20,14 @@ type userRepository struct {
 }
 
 func NewUserRepository(userPersistent user.UserPersistent, rolePersistent role.RolePersistent) user.UserRepository {
-	return &userRepository{
-		userPersistent: userPersistent,
-		rolePersistent: rolePersistent,
-	}
+	userRepoInstanceOnce.Do(func() {
+		userRepoInstance = &userRepository{
+			userPersistent: userPersistent,
+			rolePersistent: rolePersistent,
+		}
+	})
+
+	return userRepoInstance
 }
 
 func (r *userRepository) Create(ctx context.Context, e *entity.User) (*entity.User, error) {
