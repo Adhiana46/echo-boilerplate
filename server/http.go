@@ -12,21 +12,9 @@ import (
 	"time"
 
 	"github.com/Adhiana46/echo-boilerplate/config"
-	"github.com/Adhiana46/echo-boilerplate/internal/permission"
-	permissionData "github.com/Adhiana46/echo-boilerplate/internal/permission/data"
 	permissionHttpHandler "github.com/Adhiana46/echo-boilerplate/internal/permission/delivery/http"
-	permissionRepo "github.com/Adhiana46/echo-boilerplate/internal/permission/repository"
-	permissionUsecase "github.com/Adhiana46/echo-boilerplate/internal/permission/usecase"
-	"github.com/Adhiana46/echo-boilerplate/internal/role"
-	roleData "github.com/Adhiana46/echo-boilerplate/internal/role/data"
 	roleHttpHandler "github.com/Adhiana46/echo-boilerplate/internal/role/delivery/http"
-	roleRepo "github.com/Adhiana46/echo-boilerplate/internal/role/repository"
-	roleUsecase "github.com/Adhiana46/echo-boilerplate/internal/role/usecase"
-	"github.com/Adhiana46/echo-boilerplate/internal/user"
-	userData "github.com/Adhiana46/echo-boilerplate/internal/user/data"
 	userHttpHandler "github.com/Adhiana46/echo-boilerplate/internal/user/delivery/http"
-	userRepo "github.com/Adhiana46/echo-boilerplate/internal/user/repository"
-	userUsecase "github.com/Adhiana46/echo-boilerplate/internal/user/usecase"
 	cachePkg "github.com/Adhiana46/echo-boilerplate/pkg/cache"
 	"github.com/Adhiana46/echo-boilerplate/pkg/errors"
 	"github.com/Adhiana46/echo-boilerplate/pkg/logger"
@@ -46,23 +34,6 @@ type Server struct {
 	db           *sqlx.DB
 	cache        cachePkg.Cache
 	tokenManager *tokenmanager.TokenManager
-
-	// Persistent Postgres
-	persistPermission permission.PermissionPersistent
-	persistRole       role.RolePersistent
-	persistUser       user.UserPersistent
-	persistUserDevice user.UserDevicePersistent
-
-	// repositories
-	repoPermission permission.PermissionRepository
-	repoRole       role.RoleRepository
-	repoUser       user.UserRepository
-	repoUserDevice user.UserDeviceRepository
-
-	// usecases
-	usecasePermission permission.PermissionUsecase
-	usecaseRole       role.RoleUsecase
-	usecaseUser       user.UserUsecase
 
 	// handlers
 	permissionHandler permissionHttpHandler.Handler
@@ -166,9 +137,6 @@ func NewServer(cfg *config.Config, db *sqlx.DB, cache cachePkg.Cache, tokenManag
 		tokenManager: tokenManager,
 	}
 
-	srv.setupDataSource()
-	srv.setupRepo()
-	srv.setupUsecase()
 	srv.setupHttpHandler()
 	srv.setupRoutes()
 
@@ -184,30 +152,10 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.e.Shutdown(ctx)
 }
 
-func (s *Server) setupDataSource() {
-	s.persistPermission = permissionData.NewPostgresPermissionPersistent(s.db)
-	s.persistRole = roleData.NewPostgresRolePersistent(s.db)
-	s.persistUser = userData.NewPostgresUserPersistent(s.db)
-	s.persistUserDevice = userData.NewPostgresUserDevicePersistent(s.db)
-}
-
-func (s *Server) setupRepo() {
-	s.repoPermission = permissionRepo.NewPermissionRepository(s.persistPermission)
-	s.repoRole = roleRepo.NewRoleRepository(s.persistRole)
-	s.repoUser = userRepo.NewUserRepository(s.persistUser, s.persistRole)
-	s.repoUserDevice = userRepo.NewUserDeviceRepository(s.persistUserDevice)
-}
-
-func (s *Server) setupUsecase() {
-	s.usecasePermission = permissionUsecase.NewPermissionUsecase(s.repoPermission)
-	s.usecaseRole = roleUsecase.NewRoleUsecase(s.repoRole, s.repoPermission)
-	s.usecaseUser = userUsecase.NewUserUsecase(s.repoUser, s.repoRole, s.repoUserDevice, s.tokenManager)
-}
-
 func (s *Server) setupHttpHandler() {
-	s.permissionHandler = permissionHttpHandler.NewPermissionHttpHandler(s.usecasePermission)
-	s.roleHandler = roleHttpHandler.NewRoleHttpHandler(s.usecaseRole)
-	s.userHandler = userHttpHandler.NewUserHttpHandler(s.usecaseUser)
+	s.permissionHandler = InitializedPermissionHandler(s.db, s.cache, s.tokenManager)
+	s.roleHandler = InitializedRoleHandler(s.db, s.cache, s.tokenManager)
+	s.userHandler = InitializedUserHandler(s.db, s.cache, s.tokenManager)
 }
 
 func (s *Server) setupRoutes() {
